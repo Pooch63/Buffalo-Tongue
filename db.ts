@@ -1,3 +1,13 @@
+import * as colors from "colors/safe";
+
+function value_to_string(value: RowData) {
+  if (typeof value == "boolean") return colors.yellow(value ? "true" : "false");
+  if (typeof value == "number") return colors.green(value.toString());
+  if (typeof value == "string") {
+    return colors.blue(`"${value.replaceAll('"', '\\"')}"`);
+  }
+}
+
 namespace Validation {
   export function is_int(value: RowData): boolean {
     if (typeof value != "number") return false;
@@ -46,6 +56,9 @@ namespace Schema {
     type: Schema.Datatype;
     unique?: boolean;
 
+    //If provided, run the function on every row entered. If it returns false, an error is returned.
+    validation?: (value: any) => boolean;
+
     default?: RowData | null;
   }
   export class Row {
@@ -53,12 +66,14 @@ namespace Schema {
     public type: Schema.Datatype;
     public default?: RowData | null = null;
     public unique?: boolean = false;
+    public validation?: (value: RowData) => boolean;
 
     constructor(info: RowInfo) {
       this.name = info.name;
       this.type = info.type;
       if (info.unique != null) this.unique = info.unique;
       if (info.default != null) this.default = info.default;
+      this.validation = info.validation;
     }
   }
 
@@ -230,6 +245,18 @@ class Table {
       }
     }
 
+    for (let row of this.schema.rows) {
+      if (typeof row.validation == "function") {
+        if (!row.validation(record[row.name])) {
+          throw new Error(
+            `Custom validation function declared that column "${
+              row.name
+            }" was invalid (value was ${value_to_string(record[row.name])})`
+          );
+        }
+      }
+    }
+
     this.data[unique == null ? this.data_count : String(unique)] = record;
 
     this.data_count += 1;
@@ -247,11 +274,6 @@ class Table {
 
 export class Database {
   private tables: Record<string, Table> = {};
-
-  /**
-   * @param path - The path to the file where we should retrieve the database. If not provided, DB is simply stored in memory
-   */
-  constructor(path?: string) {}
 
   create_table({
     name,
@@ -372,23 +394,47 @@ export class Database {
   }
 }
 
-// const db = new Database();
-// db.create_table({
-//   name: "products",
-//   schema: {
-//     rows: [
-//       //Note that we aren't specifying unique: false here. Rows default to not being unique
-//       { name: "name", type: STRING },
-//       { name: "cost", type: DOUBLE, default: 5.0 },
-//     ],
-//   },
-// });
+const db = new Database();
+db.create_table({
+  name: "users",
+  schema: {
+    rows: [
+      //Note that we aren't specifying unique: false here. Rows default to not being unique
+      {
+        name: "username",
+        type: STRING,
+        validation: (value: string) => value.length <= 40,
+      },
+    ],
+  },
+});
 
-// db.insert({ table: "products", record: { name: "shoes", cost: 100 } });
-// db.insert({ table: "products", record: { name: "gloves" } });
+//This is inserted without a problem
+db.insert({
+  table: "users",
+  record: { username: "This is pretty darn short." },
+});
 
-// console.log(
-//   db.select({
+//This throws an error
+db.insert({
+  table: "users",
+  record: {
+    username:
+      "This is an unnecessarily, egregiously, shockingly, utterly, DEVASTATINGLY long. Seriously, you really can't let this happen.",
+  },
+});
+
+// console.time();
+// for (let i = 0; i < 1_000_000; i += 1) {
+//   db.insert({
 //     table: "products",
-//   })
-// );
+//     record: { name: "asd", cost: Math.random() },
+//   });
+// }
+// console.timeEnd();
+
+console.log(
+  db.select({
+    table: "users",
+  })
+);
