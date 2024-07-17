@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "outDir": "./lib",
-    "lib": ["ES2021", "DOM"]
+    "lib": ["ES2021", "DOM"],
+    "target": "ES5",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext"
   },
-  "include": ["./db.ts"]
+  "include": ["./src/*.ts"]
 }

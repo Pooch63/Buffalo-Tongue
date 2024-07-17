@@ -1,5 +1,7 @@
 # Buffalo Tongue DB
 
+(go to documentation.md for documentation)
+
 Buffalo Tongue DB is a fun, very small database that stores everything in memory. It does not store data in a file.
 It provides type checking, an extremely useful feature in my opinion.
 
@@ -103,7 +105,8 @@ Additional Features:
 ## Custom Validation Functions:
 
 Say we want to make sure that usernames are not above some maximum length when inserting them into a database.
-If we insert users in multiple places in the code, it can be a bit unreadable.
+If we insert users in multiple places in the code, it can be a bit unmaintable to run this check every time.
+
 Instead, Buffalo Tongue allows you to specify a custom validation that will be run every time an entry is inserted.
 If the validation function returns false, an error is thrown.
 Here's how we could implement that:
@@ -116,7 +119,7 @@ db.create_table({
       //Note that we aren't specifying unique: false here. Rows default to not being unique
       {
         name: "username",
-        type: STRING,
+        type: buffalo.STRING,
         validation: (value: string) => value.length <= 40,
       },
     ],

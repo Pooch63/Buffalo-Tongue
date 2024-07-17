@@ -1,5 +1,23 @@
 import * as colors from "colors/safe";
 
+export type RowData = number | string | boolean;
+export type TableRecord = Record<string, RowData>;
+//If a table has a unique
+export type TableData = Record<string | number, TableRecord | null>;
+
+type QueryConditionObject = {
+  [name in string]:
+    | {
+        not_eq?: RowData;
+        eq?: RowData;
+        lt?: number;
+        gt?: number;
+        lte?: number;
+        gte?: number;
+      }
+    | RowData;
+};
+
 function value_to_string(value: RowData) {
   if (typeof value == "boolean") return colors.yellow(value ? "true" : "false");
   if (typeof value == "number") return colors.green(value.toString());
@@ -51,7 +69,7 @@ namespace Schema {
     return true;
   }
 
-  export interface RowInfo {
+  export interface ColumnInfo {
     name: string;
     type: Schema.Datatype;
     unique?: boolean;
@@ -68,7 +86,7 @@ namespace Schema {
     public unique?: boolean = false;
     public validation?: (value: RowData) => boolean;
 
-    constructor(info: RowInfo) {
+    constructor(info: ColumnInfo) {
       this.name = info.name;
       this.type = info.type;
       if (info.unique != null) this.unique = info.unique;
@@ -80,7 +98,7 @@ namespace Schema {
   export class Table {
     public rows: Schema.Row[];
     public unique_key: string | null = null;
-    constructor({ rows }: { rows: Schema.RowInfo[] }) {
+    constructor({ rows }: { rows: Schema.ColumnInfo[] }) {
       let parsed_rows: Schema.Row[] = [];
       for (let row of rows) parsed_rows.push(new Schema.Row(row));
 
@@ -136,23 +154,10 @@ export const INT = Schema.Datatype.INT;
 export const DOUBLE = Schema.Datatype.DOUBLE;
 export const STRING = Schema.Datatype.STRING;
 
-type QueryConditionObject = {
-  [name in string]:
-    | {
-        not_eq?: RowData;
-        eq?: RowData;
-        lt?: number;
-        gt?: number;
-        lte?: number;
-        gte?: number;
-      }
-    | RowData;
-};
-
 class QueryCondition {
-  public conditions: QueryConditionObject[] = [];
-  public row_limit = Number.POSITIVE_INFINITY;
-  or(condition: QueryConditionObject): this {
+  public conditions: (QueryCondition | QueryConditionObject)[] = [];
+  public row_limit: number = Number.POSITIVE_INFINITY;
+  or(condition: QueryCondition | QueryConditionObject): this {
     this.conditions.push(condition);
     return this;
   }
@@ -200,19 +205,18 @@ class QueryCondition {
   }
   validate(row: TableRecord): boolean {
     for (let condition of this.conditions) {
-      if (this.validate_against_condition({ row, condition })) return true;
+      if (condition instanceof QueryCondition) {
+        if (!condition.validate(row)) return false;
+      } else if (!this.validate_against_condition({ row, condition }))
+        return false;
     }
-    return false;
+    return true;
   }
 
   constructor(condition: QueryConditionObject) {
     this.conditions.push(condition);
   }
 }
-
-type RowData = number | string | boolean;
-type TableRecord = Record<string, RowData>;
-type TableData = Record<string | number, TableRecord>;
 
 class Table {
   public name: string;
@@ -266,22 +270,53 @@ class Table {
   //If the function returns false, we stop iterating through the list
   each(func: (row: TableRecord, key: string | number) => boolean | void) {
     for (let key in this.data) {
-      let should_continue = func(this.data[key], key);
-      if (should_continue == false) break;
+      if (this.data[key] != null) {
+        let should_continue = func(this.data[key], key);
+        if (should_continue == false) break;
+      }
+    }
+  }
+  //Iterate through each row with a function
+  //If the function returns true, we delete it from the data
+  filter(func: (row: TableRecord, key: string | number) => boolean) {
+    let unique = this.schema.unique_key != null;
+    //If this table has a unique key, provide the key as a string, otherwise a number
+    //If we don't have a unique key, we need to actually create a new object, because indices are based on their entry number.
+
+    if (unique) {
+      for (let key in this.data) {
+        if (this.data[key] != null) {
+          if (!func(this.data[key], key)) this.data[key] = null;
+        }
+      }
+    } else {
+      let new_data: TableData = {};
+      let num_entries = 0;
+      for (let row = 0; row < this.data_count; row += 1) {
+        if (func(this.data[row], row)) continue;
+
+        new_data[num_entries] = this.data[row];
+        num_entries += 1;
+      }
+      this.data = new_data;
+      this.data_count = num_entries;
     }
   }
 }
 
 export class Database {
   private tables: Record<string, Table> = {};
+  private get_table(table: string): Table {
+    if (this.tables[table] == null) {
+      throw new Error(`Table "${table}" does not exist.`);
+    }
+    return this.tables[table];
+  }
 
-  create_table({
-    name,
-    schema,
-  }: {
-    name: string;
-    schema: Schema.Table | { rows: Schema.RowInfo[] };
-  }) {
+  create_table(
+    name: string,
+    schema: Schema.Table | { rows: Schema.ColumnInfo[] }
+  ) {
     let parsed_schema =
       schema instanceof Schema.Table
         ? schema
@@ -297,11 +332,8 @@ export class Database {
   }) {
     table.insert(record);
   }
-  insert({ table, record }: { table: string; record: TableRecord }) {
-    if (this.tables[table] == null) {
-      throw new Error(`Table "${table}" does not exist.`);
-    }
-    this.insert_into_table({ table: this.tables[table], record });
+  insert(table: string, record: TableRecord) {
+    this.insert_into_table({ table: this.get_table(table), record });
   }
 
   private select_from_table({
@@ -328,25 +360,22 @@ export class Database {
     });
     return rows;
   }
-  select({
-    table,
-    condition,
-  }: {
-    table: string;
-    condition?: QueryCondition | QueryConditionObject | null;
-  }) {
+  select(
+    table: string,
+    condition?: QueryCondition | QueryConditionObject | null
+  ): TableRecord[] {
     if (this.tables[table] == null) {
       throw new Error(`Table "${table}" does not exist.`);
     }
 
-    let parsed_condition =
-      condition instanceof QueryCondition
-        ? condition
-        : new QueryCondition(condition);
-
     return this.select_from_table({
       table: this.tables[table],
-      condition: parsed_condition,
+      condition:
+        condition == null
+          ? null
+          : condition instanceof QueryCondition
+          ? condition
+          : new QueryCondition(condition),
     });
   }
 
@@ -367,25 +396,51 @@ export class Database {
 
     return count;
   }
-  select_count({
-    table,
-    condition,
-  }: {
-    table: string;
-    condition?: QueryCondition | QueryConditionObject | null;
-  }) {
+  select_count(
+    table: string,
+    condition?: QueryCondition | QueryConditionObject | null
+  ) {
     if (this.tables[table] == null) {
       throw new Error(`Table "${table}" does not exist.`);
     }
 
-    let parsed_condition =
-      condition instanceof QueryCondition
-        ? condition
-        : new QueryCondition(condition);
-
     return this.select_count_from_table({
       table: this.tables[table],
-      condition: parsed_condition,
+      condition:
+        condition == null
+          ? null
+          : condition instanceof QueryCondition
+          ? condition
+          : new QueryCondition(condition),
+    });
+  }
+
+  private delete_from_table({
+    table,
+    condition,
+  }: {
+    table: Table;
+    condition?: QueryCondition | null;
+  }) {
+    //If condition equals null, just delete every single record.
+    //Otherwise, only delete records for which the condition returns true.
+    table.filter((row: TableRecord) => {
+      if (condition == null) return true;
+      return condition.validate(row);
+    });
+  }
+  delete(
+    table: string,
+    condition?: QueryCondition | QueryConditionObject | null
+  ) {
+    this.delete_from_table({
+      table: this.get_table(table),
+      condition:
+        condition == null
+          ? null
+          : condition instanceof QueryCondition
+          ? condition
+          : new QueryCondition(condition),
     });
   }
 
@@ -393,48 +448,3 @@ export class Database {
     return this.tables[name];
   }
 }
-
-const db = new Database();
-db.create_table({
-  name: "users",
-  schema: {
-    rows: [
-      //Note that we aren't specifying unique: false here. Rows default to not being unique
-      {
-        name: "username",
-        type: STRING,
-        validation: (value: string) => value.length <= 40,
-      },
-    ],
-  },
-});
-
-//This is inserted without a problem
-db.insert({
-  table: "users",
-  record: { username: "This is pretty darn short." },
-});
-
-//This throws an error
-db.insert({
-  table: "users",
-  record: {
-    username:
-      "This is an unnecessarily, egregiously, shockingly, utterly, DEVASTATINGLY long. Seriously, you really can't let this happen.",
-  },
-});
-
-// console.time();
-// for (let i = 0; i < 1_000_000; i += 1) {
-//   db.insert({
-//     table: "products",
-//     record: { name: "asd", cost: Math.random() },
-//   });
-// }
-// console.timeEnd();
-
-console.log(
-  db.select({
-    table: "users",
-  })
-);
