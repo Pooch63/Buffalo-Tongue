@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "outDir": "./lib"
+  },
+  "include": ["./db.ts"]
+}
