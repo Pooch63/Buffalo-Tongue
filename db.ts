@@ -372,23 +372,23 @@ export class Database {
   }
 }
 
-const db = new Database();
-db.create_table({
-  name: "products",
-  schema: {
-    rows: [
-      //Note that we aren't specifying unique: false here. Rows default to not being unique
-      { name: "name", type: STRING },
-      { name: "cost", type: DOUBLE, default: 5.0 },
-    ],
-  },
-});
+// const db = new Database();
+// db.create_table({
+//   name: "products",
+//   schema: {
+//     rows: [
+//       //Note that we aren't specifying unique: false here. Rows default to not being unique
+//       { name: "name", type: STRING },
+//       { name: "cost", type: DOUBLE, default: 5.0 },
+//     ],
+//   },
+// });
 
-db.insert({ table: "products", record: { name: "shoes", cost: 100 } });
-db.insert({ table: "products", record: { name: "gloves" } });
+// db.insert({ table: "products", record: { name: "shoes", cost: 100 } });
+// db.insert({ table: "products", record: { name: "gloves" } });
 
-console.log(
-  db.select({
-    table: "products",
-  })
-);
+// console.log(
+//   db.select({
+//     table: "products",
+//   })
+// );

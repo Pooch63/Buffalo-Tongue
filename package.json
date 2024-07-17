@@ -1,0 +1,27 @@
+{
+  "name": "buffalo-tongue",
+  "version": "0.0.1",
+  "description": "A TypeScript database library with built-in type checking",
+  "main": "./lib/db.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pooch63/Buffalo-Tongue.git"
+  },
+  "keywords": [
+    "database",
+    "typescript",
+    "types"
+  ],
+  "author": "Kiyaan Pillai",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Pooch63/Buffalo-Tongue/issues"
+  },
+  "homepage": "https://github.com/Pooch63/Buffalo-Tongue#readme"
+}
