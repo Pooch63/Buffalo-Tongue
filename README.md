@@ -17,8 +17,8 @@ db.create_table({
   name: "users",
   schema: {
     rows: [
-      { name: "username", type: Buffalo Tongue.STRING, unique: true },
-      { name: "age", type: Buffalo Tongue.INT, unique: false },
+      { name: "username", type: BuffaloTongue.STRING, unique: true },
+      { name: "age", type: BuffaloTongue.INT, unique: false },
     ],
   },
 });
@@ -54,8 +54,8 @@ db.create_table({
   schema: {
     rows: [
       //Note that we aren't specifying unique: false here. Rows default to not being unique
-      { name: "name", type: Buffalo Tongue.STRING },
-      { name: "cost", type: Buffalo Tongue.DOUBLE, default: 5.0 },
+      { name: "name", type: BuffaloTongue.STRING },
+      { name: "cost", type: BuffaloTongue.DOUBLE, default: 5.0 },
     ],
   },
 });
