@@ -34,7 +34,7 @@ db.insert({ table: "users", record: { age: 10, username: "Sam" } });
 db.insert({ table: "users", record: { age: 100, username: "Kiyaan" } }); //Throws error because username "Kiyaan" already exists. For the rest of the demo, assume that we did not run this.
 ```
 
-Getting data is just as easy. We can grab all the rows by executing:
+Getting data is just as easy. We can grab all the rows with ages greater than 6 by executing:
 
 ```typescript
 db.select({
