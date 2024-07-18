@@ -108,7 +108,7 @@ class `Database`
 
 ## Methods
 
-- ### create_table
+- ### create_table (alias: `create`)
 
   - <span style="color:#FF7F7F">@param</span> - table (`string`)
     The table name
@@ -131,6 +131,19 @@ class `Database`
 
   - <span style="color:#FF7F7F">@param</span> - table (`string`)
     The table name
+
+  - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject |  null`)
+    Condition to check records against. Only records that meet this condition are returned.
+
+  - <span style="color:#FF7F7F">@return</span> `TableRecord[]`
+
+- ### select_distinct (alias: `distinct`)
+
+  - <span style="color:#FF7F7F">@param</span> - table (`string`)
+    The table name
+
+  - <span style="color:#FF7F7F">@param</span> - columns (`string | string[]`)
+    The column(s) that must be distinct in the returned records.
 
   - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject |  null`)
     Condition to check records against. Only records that meet this condition are returned.

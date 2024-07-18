@@ -1,3 +1,8 @@
+- ### v0.1.2 - Select Distinct, change to create table use
+
+  Database now has select distinct class.
+  Database.prototype.create_table now accepts parameters as normal arguments instead of an object.
+
 - ### v0.1.1 - Update statement, booleans, better errors
 
   Now SQL-like update statement.
