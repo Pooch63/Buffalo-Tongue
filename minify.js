@@ -7,9 +7,12 @@ const minified = terser.minify_sync(fs.readFileSync("./lib/db.js").toString(), {
     content: fs.readFileSync("./lib/db.js.map").toString(),
     url: "./db.min.js.map",
   },
+  format: {
+    semicolons: false,
+  },
 });
 
 console.log(`Minified source code`);
 
-fs.writeFileSync("./lib/db.min,js.map", minified.map);
+fs.writeFileSync("./lib/db.min.js.map", minified.map);
 fs.writeFileSync("./lib/db.min.js", minified.code);
