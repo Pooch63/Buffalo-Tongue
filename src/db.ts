@@ -1,27 +1,9 @@
-import * as colors from "colors/safe";
+import colors from "colors/safe";
 
 export type RowData = number | string | boolean;
 export type TableRecord = Record<string, RowData>;
 //If a table has a unique
 export type TableData = Record<string | number, TableRecord | null>;
-
-type QueryConditionObject = {
-  //For every column in a row you try to insert
-  //If that column name is a value in the QueryConditionObject,
-  //it checks that value against the provided condition
-  [name in string]:  //You may define more than one of these conditions //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3 //If any value is defined in this object, it is tested against the row data. //Not equal, equal, <, >, <=, >=
-    | {
-        not_eq?: RowData;
-        eq?: RowData;
-        lt?: number;
-        gt?: number;
-        lte?: number;
-        gte?: number;
-      }
-    //Or, if this value is simply row data, it checks whether or not the column is equal to this value.
-    // It is equivalent to specifying the "eq" value in the object.
-    | RowData;
-};
 
 function value_to_string(value: RowData) {
   if (typeof value == "boolean") return colors.yellow(value ? "true" : "false");
@@ -29,6 +11,15 @@ function value_to_string(value: RowData) {
   if (typeof value == "string") {
     return colors.blue(`"${value.replaceAll('"', '\\"')}"`);
   }
+}
+function value_type_as_string(value: RowData) {
+  if (Validation.is_int(value)) return colors.green("integer");
+  if (Validation.is_double(value)) return colors.green("double");
+
+  return {
+    string: colors.blue("string"),
+    boolean: colors.yellow("boolean"),
+  }[typeof value];
 }
 
 namespace Validation {
@@ -64,10 +55,10 @@ namespace Schema {
         if (!Validation.is_double(value)) return false;
         break;
       case Schema.Datatype.STRING:
-        if (typeof value == "string") return false;
+        if (typeof value != "string") return false;
         break;
       case Schema.Datatype.BOOLEAN:
-        if (typeof value == "boolean") return false;
+        if (typeof value != "boolean") return false;
         break;
       default:
         return false;
@@ -132,14 +123,18 @@ namespace Schema {
     validate(record: TableRecord): boolean {
       for (let row of this.rows) {
         let value = record[row.name] ?? row.default;
-        if (!value) {
+        if (value == null) {
           throw new Error(
             `Unable to insert record -- row "${row.name}" was not included, and no default exists.`
           );
         }
         if (!Schema.validate_type({ value, type: row.type })) {
           throw new Error(
-            `Column "${row.name}" is not of valid type (valid type is of ${row.type})`
+            `Column "${row.name}" is not of valid type (valid type is of ${
+              row.type
+            }, instead got value ${value_to_string(
+              value
+            )} as ${value_type_as_string(value)})`
           );
         }
       }
@@ -157,6 +152,23 @@ namespace Schema {
   }
 }
 
+type QueryConditionObject = {
+  //For every column in a row you try to insert
+  //If that column name is a value in the QueryConditionObject,
+  //it checks that value against the provided condition
+  [name in string]:  //You may define more than one of these conditions //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3 //If any value is defined in this object, it is tested against the row data. //Not equal, equal, <, >, <=, >=
+    | {
+        not_eq?: RowData;
+        eq?: RowData;
+        lt?: number;
+        gt?: number;
+        lte?: number;
+        gte?: number;
+      }
+    //Or, if this value is simply row data, it checks whether or not the column is equal to this value.
+    // It is equivalent to specifying the "eq" value in the object.
+    | RowData;
+};
 class QueryCondition {
   public conditions: (QueryCondition | QueryConditionObject)[] = [];
   public row_limit: number = Number.POSITIVE_INFINITY;
@@ -218,6 +230,14 @@ class QueryCondition {
 
   constructor(condition: QueryConditionObject) {
     this.conditions.push(condition);
+  }
+}
+
+type Update = Record<string, RowData>;
+function update_row(update: Update, row: TableRecord) {
+  for (let col in row) {
+    let value = update[col];
+    if (value != null) row[col] = value;
   }
 }
 
@@ -309,7 +329,7 @@ class Table {
 
 export class Database {
   private tables: Record<string, Table> = {};
-  private get_table(table: string): Table {
+  get_table(table: string): Table {
     if (this.tables[table] == null) {
       throw new Error(`Table "${table}" does not exist.`);
     }
@@ -360,12 +380,8 @@ export class Database {
     table: string,
     condition?: QueryCondition | QueryConditionObject | null
   ): TableRecord[] {
-    if (this.tables[table] == null) {
-      throw new Error(`Table "${table}" does not exist.`);
-    }
-
     return this.select_from_table(
-      this.tables[table],
+      this.get_table(table),
       condition == null
         ? null
         : condition instanceof QueryCondition
@@ -392,12 +408,8 @@ export class Database {
     table: string,
     condition?: QueryCondition | QueryConditionObject | null
   ) {
-    if (this.tables[table] == null) {
-      throw new Error(`Table "${table}" does not exist.`);
-    }
-
     return this.select_count_from_table(
-      this.tables[table],
+      this.get_table(table),
       condition == null
         ? null
         : condition instanceof QueryCondition
@@ -415,11 +427,11 @@ export class Database {
     });
   }
   delete(
-    table: string,
+    table_name: string,
     condition?: QueryCondition | QueryConditionObject | null
   ) {
     this.delete_from_table(
-      this.get_table(table),
+      this.get_table(table_name),
       condition == null
         ? null
         : condition instanceof QueryCondition
@@ -428,8 +440,41 @@ export class Database {
     );
   }
 
-  select_distinct() {}
-  distint = this.select_distinct;
+  update(
+    table_name: string,
+    update: Update,
+    condition?: QueryCondition | QueryConditionObject | null
+  ) {
+    let table = this.get_table(table_name);
+    let parsed_condition =
+      condition == null
+        ? null
+        : condition instanceof QueryCondition
+        ? condition
+        : new QueryCondition(condition);
+
+    //Validate that every type in the update object matches the column type
+    for (let col of table.schema.rows) {
+      if (!Schema.validate_type({ value: update[col.name], type: col.type })) {
+        throw new Error(
+          `Invalid value provided for column in update statement -- "${
+            col.name
+          }" is not of valid type (valid type is of ${
+            col.type
+          }, instead got value ${value_to_string(
+            update[col.name]
+          )} as ${value_type_as_string(update[col.name])})`
+        );
+      }
+    }
+
+    table.each((row: TableRecord) => {
+      //If condition is met, handle the update
+      if (parsed_condition == null || parsed_condition.validate(row)) {
+        update_row(update, row);
+      }
+    });
+  }
 }
 
 export const INT = Schema.Datatype.INT;
@@ -437,11 +482,17 @@ export const DOUBLE = Schema.Datatype.DOUBLE;
 export const STRING = Schema.Datatype.STRING;
 export const BOOLEAN = Schema.Datatype.BOOLEAN;
 
-// let db = new Database();
-// db.create_table("users", {
-//   rows: [
-//     { name: "username", type: STRING, unique: true },
-//     { name: "age", type: INT, unique: false },
-//   ],
-// });
-// db.insert("users", { age: 1.75, username: "Kiyaan" });
+let db = new Database();
+db.create_table("users", {
+  rows: [
+    { name: "username", type: STRING, unique: true },
+    { name: "age", type: BOOLEAN },
+  ],
+});
+db.insert("users", { age: false, username: "Kiyaan" });
+db.insert("users", { age: true, username: "Hi!" });
+
+console.log(db.select("users"));
+
+console.log(db.update("users", { age: 2 }));
+console.log(db.select("users"));

@@ -87,7 +87,16 @@ class `QueryCondition`
 
   - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject`)
 
-## Buffalo Type Definitions
+### Update Information
+
+type `Update`
+
+When you call an update function, if a record meets the provided condition, this is a record of the values the
+columns should be set to. Each key is a column name, and each value is the column value.
+This will throw an error if you provide an incorrect row type for the column.
+`Record<string, RowData>`
+
+## Buffalo Class Definitions
 
 class `Database`
 
@@ -130,7 +139,24 @@ class `Database`
 
 - ### delete
 
-  - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject |  null`)
+  - <span style="color:#FF7F7F">@param</span> - table (`string`)
+    The table name
+
+  - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject | null`)
     Condition to check records against. Only records that meet this condition are deleted.
+
+  - <span style="color:#FF7F7F">@return</span> `null`
+
+- ### update
+
+  - <span style="color:#FF7F7F">@param</span> - table (`string`)
+    The table name
+
+  - <span style="color:#FF7F7F">@param</span> - update (`Update`)
+    The update object that proides the values for each column that meets the condition.
+    More info in definition.
+
+  - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject | null`)
+    Condition to check records against. Only records that meet this condition are updated.
 
   - <span style="color:#FF7F7F">@return</span> `null`

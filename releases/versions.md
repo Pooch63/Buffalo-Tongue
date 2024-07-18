@@ -1,3 +1,9 @@
+- ### v0.1.1 - Update statement, booleans, better errors
+
+  Now SQL-like update statement.
+  Boolean support is finished.
+  More errors have color, more info about what caused the errors.
+
 - ### v0.1.0 - MAJOR NEW VERSION. Documentation, delete function
 
   Markdown file with all necessary documentation.

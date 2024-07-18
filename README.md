@@ -8,15 +8,15 @@ It provides type checking, an extremely useful feature in my opinion.
 Using Buffalo Tongue is EXTREMELY simple. Installation is just like any other pacakge:
 
 ```
-npm install buffalo-tongue
+npm install buffalo-tongue-db
 ```
 
 You can create a database with the following:
 
 ```typescript
-const buffalo = require("buffalo-tongue");
+const buffalo = require("buffalo-tongue-db");
 //OR
-import * as buffalo from "buffalo-tongue";
+import * as buffalo from "buffalo-tongue-db";
 
 let db = new buffalo.Database();
 ```
