@@ -95,6 +95,7 @@ namespace Schema {
   export class Table {
     public rows: Schema.Row[];
     public unique_key: string | null = null;
+
     constructor({ rows }: { rows: Schema.ColumnInfo[] }) {
       let parsed_rows: Schema.Row[] = [];
       for (let row of rows) parsed_rows.push(new Schema.Row(row));
@@ -117,6 +118,14 @@ namespace Schema {
       }
 
       this.rows = parsed_rows;
+    }
+
+    //Does a column exist with the given name?
+    //Warning: not very performant. Room for improvement, but it should only be called
+    //once per database function
+    col_exists(col: string): boolean {
+      for (let row of this.rows) if (row.name == col) return true;
+      return false;
     }
 
     //Is the record valid for the table?
@@ -327,23 +336,23 @@ class Table {
   }
 }
 
+namespace Errors {
+  export class Nonexistent_Value extends Error {}
+  export class Bad_Type extends Error {}
+  export class Nonexistent_Column extends Error {}
+}
+
 export class Database {
   private tables: Record<string, Table> = {};
   get_table(table: string): Table {
     if (this.tables[table] == null) {
-      throw new Error(`Table "${table}" does not exist.`);
+      throw new Errors.Nonexistent_Value(`Table "${table}" does not exist.`);
     }
     return this.tables[table];
   }
 
-  create_table(
-    name: string,
-    schema: Schema.Table | { rows: Schema.ColumnInfo[] }
-  ) {
-    let parsed_schema =
-      schema instanceof Schema.Table
-        ? schema
-        : new Schema.Table({ rows: schema.rows });
+  create_table(name: string, schema: { rows: Schema.ColumnInfo[] }) {
+    let parsed_schema = new Schema.Table({ rows: schema.rows });
     this.tables[name] = new Table({ name, schema: parsed_schema });
   }
   public create = this.create_table;
@@ -417,6 +426,7 @@ export class Database {
         : new QueryCondition(condition)
     );
   }
+  public count = this.select_count;
 
   private delete_from_table(table: Table, condition?: QueryCondition | null) {
     //If condition equals null, just delete every single record.
@@ -440,6 +450,39 @@ export class Database {
     );
   }
 
+  select_distinct(
+    table_name: string,
+    columns: string | string[],
+    condition?: QueryCondition | QueryConditionObject | null
+  ) {
+    let col_arr = typeof columns == "string" ? [columns] : columns;
+    let table = this.get_table(table_name);
+
+    //Make sure every column actually exists
+    for (let col of col_arr) {
+      if (!table.schema.col_exists(col)) {
+        throw new Errors.Nonexistent_Column(
+          `Select distinct requested distinct, nonexistent column "${col}"`
+        );
+      }
+    }
+
+    let distinct: Record<string, Record<string | number, TableRecord>> = {};
+    for (let col of table.schema.rows) distinct[col.name] = {};
+
+    let rows: TableRecord[] = [];
+    table.each((row: TableRecord, key: string | number) => {
+      //Have we already found a row with a distinct column with the same value as this one?
+      for (let col of col_arr) {
+        if (distinct[col][row[col].toString()] != null) return;
+        distinct[col][row[col].toString()] = row;
+      }
+      rows.push(row);
+    });
+
+    return rows;
+  }
+
   update(
     table_name: string,
     update: Update,
@@ -455,13 +498,16 @@ export class Database {
 
     //Validate that every type in the update object matches the column type
     for (let col of table.schema.rows) {
-      if (!Schema.validate_type({ value: update[col.name], type: col.type })) {
-        throw new Error(
+      if (
+        update[col.name] != null &&
+        !Schema.validate_type({ value: update[col.name], type: col.type })
+      ) {
+        throw new Errors.Bad_Type(
           `Invalid value provided for column in update statement -- "${
             col.name
-          }" is not of valid type (valid type is of ${
+          }" is not of valid type (valid type is of ${value_type_as_string(
             col.type
-          }, instead got value ${value_to_string(
+          )}, instead got value ${value_to_string(
             update[col.name]
           )} as ${value_type_as_string(update[col.name])})`
         );
@@ -482,17 +528,18 @@ export const DOUBLE = Schema.Datatype.DOUBLE;
 export const STRING = Schema.Datatype.STRING;
 export const BOOLEAN = Schema.Datatype.BOOLEAN;
 
-let db = new Database();
-db.create_table("users", {
-  rows: [
-    { name: "username", type: STRING, unique: true },
-    { name: "age", type: BOOLEAN },
-  ],
-});
-db.insert("users", { age: false, username: "Kiyaan" });
-db.insert("users", { age: true, username: "Hi!" });
+// const db = new Database();
+// db.create_table("users", {
+//   rows: [
+//     { name: "username", type: STRING },
+//     { name: "age", type: INT },
+//   ],
+// });
+// db.insert("users", { age: 1, username: "Kiyaan" });
+// db.insert("users", { age: 2, username: "Hi!" });
+// db.insert("users", { age: 3, username: "Kiyaan" });
 
-console.log(db.select("users"));
-
-console.log(db.update("users", { age: 2 }));
-console.log(db.select("users"));
+// console.log(db.select("users"));
+// // console.log(db.update("users", { age: 2 }, { username: "yo" }));
+// console.log(db.select_distinct("users", ["username"]));
+// console.log(db.select("users"));
