@@ -1,9 +1,19 @@
 {
   "name": "buffalo-tongue",
-  "version": "0.1.0",
+  "version": "0.1.0.1",
   "description": "A TypeScript database library with built-in type checking",
   "main": "./lib/db.min.js",
   "types": "./lib/db.d.ts",
+  "exports": {
+    ".": [
+      {
+        "types": "./lib/db.d.ts",
+        "import": "./lib/db.js",
+        "require": "./dist/db.min.js"
+      },
+      "./dist/db.min.js"
+    ]
+  },
   "directories": {
     "lib": "lib"
   },
@@ -27,6 +37,7 @@
   },
   "homepage": "https://github.com/Pooch63/Buffalo-Tongue#readme",
   "dependencies": {
-    "colors": "^1.4.0"
+    "colors": "^1.4.0",
+    "terser": "^5.31.3"
   }
 }

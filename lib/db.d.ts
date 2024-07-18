@@ -15,7 +15,8 @@ declare namespace Schema {
     enum Datatype {
         INT = "integer",
         DOUBLE = "double",
-        STRING = "string"
+        STRING = "string",
+        BOOLEAN = "boolean"
     }
     function validate_type({ value, type, }: {
         value: RowData;
@@ -46,9 +47,6 @@ declare namespace Schema {
     }
     function get_unique_key(record: TableRecord, schema: Schema.Table): null | RowData;
 }
-export declare const INT = Schema.Datatype.INT;
-export declare const DOUBLE = Schema.Datatype.DOUBLE;
-export declare const STRING = Schema.Datatype.STRING;
 declare class QueryCondition {
     conditions: (QueryCondition | QueryConditionObject)[];
     row_limit: number;
@@ -77,6 +75,9 @@ export declare class Database {
     create_table(name: string, schema: Schema.Table | {
         rows: Schema.ColumnInfo[];
     }): void;
+    create: (name: string, schema: Schema.Table | {
+        rows: Schema.ColumnInfo[];
+    }) => void;
     private insert_into_table;
     insert(table: string, record: TableRecord): void;
     private select_from_table;
@@ -85,6 +86,10 @@ export declare class Database {
     select_count(table: string, condition?: QueryCondition | QueryConditionObject | null): number;
     private delete_from_table;
     delete(table: string, condition?: QueryCondition | QueryConditionObject | null): void;
-    table(name: string): Table | null;
+    select_distinct(): void;
+    distint: () => void;
 }
+export declare const INT = Schema.Datatype.INT;
+export declare const DOUBLE = Schema.Datatype.DOUBLE;
+export declare const STRING = Schema.Datatype.STRING;
 export {};

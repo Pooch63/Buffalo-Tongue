@@ -6,7 +6,10 @@ export type TableRecord = Record<string, RowData>;
 export type TableData = Record<string | number, TableRecord | null>;
 
 type QueryConditionObject = {
-  [name in string]:
+  //For every column in a row you try to insert
+  //If that column name is a value in the QueryConditionObject,
+  //it checks that value against the provided condition
+  [name in string]:  //You may define more than one of these conditions //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3 //If any value is defined in this object, it is tested against the row data. //Not equal, equal, <, >, <=, >=
     | {
         not_eq?: RowData;
         eq?: RowData;
@@ -15,6 +18,8 @@ type QueryConditionObject = {
         lte?: number;
         gte?: number;
       }
+    //Or, if this value is simply row data, it checks whether or not the column is equal to this value.
+    // It is equivalent to specifying the "eq" value in the object.
     | RowData;
 };
 
@@ -34,9 +39,6 @@ namespace Validation {
   export function is_double(value: RowData): boolean {
     return typeof value == "number";
   }
-  export function is_string(value: RowData): boolean {
-    return typeof value == "string";
-  }
 }
 
 namespace Schema {
@@ -44,6 +46,7 @@ namespace Schema {
     INT = "integer",
     DOUBLE = "double",
     STRING = "string",
+    BOOLEAN = "boolean",
   }
 
   export function validate_type({
@@ -61,7 +64,10 @@ namespace Schema {
         if (!Validation.is_double(value)) return false;
         break;
       case Schema.Datatype.STRING:
-        if (!Validation.is_string(value)) return false;
+        if (typeof value == "string") return false;
+        break;
+      case Schema.Datatype.BOOLEAN:
+        if (typeof value == "boolean") return false;
         break;
       default:
         return false;
@@ -141,6 +147,7 @@ namespace Schema {
     }
   }
 
+  //Get the unique value of a row if it exists, otherwise return null.
   export function get_unique_key(
     record: TableRecord,
     schema: Schema.Table
@@ -149,10 +156,6 @@ namespace Schema {
     return record[schema.unique_key];
   }
 }
-
-export const INT = Schema.Datatype.INT;
-export const DOUBLE = Schema.Datatype.DOUBLE;
-export const STRING = Schema.Datatype.STRING;
 
 class QueryCondition {
   public conditions: (QueryCondition | QueryConditionObject)[] = [];
@@ -180,9 +183,9 @@ class QueryCondition {
       //Is it just plain data?
       if (typeof data != "object") return value == data;
 
-      if (data.not_eq && !(value != data.not_eq)) return false;
+      if (data.not_eq && !(value !== data.not_eq)) return false;
 
-      if (data.eq && !(value == data.eq)) return false;
+      if (data.eq && !(value === data.eq)) return false;
 
       if (data.lt && !(typeof value == "number" && value < data.lt)) {
         return false;
@@ -323,26 +326,19 @@ export class Database {
         : new Schema.Table({ rows: schema.rows });
     this.tables[name] = new Table({ name, schema: parsed_schema });
   }
-  private insert_into_table({
-    table,
-    record,
-  }: {
-    table: Table;
-    record: TableRecord;
-  }) {
+  public create = this.create_table;
+
+  private insert_into_table(table: Table, record: TableRecord) {
     table.insert(record);
   }
   insert(table: string, record: TableRecord) {
-    this.insert_into_table({ table: this.get_table(table), record });
+    this.insert_into_table(this.get_table(table), record);
   }
 
-  private select_from_table({
-    table,
-    condition,
-  }: {
-    table: Table;
-    condition?: QueryCondition | null;
-  }): TableRecord[] {
+  private select_from_table(
+    table: Table,
+    condition?: QueryCondition | null
+  ): TableRecord[] {
     //If no condition was proivded, literally just return every row
     if (condition == null) {
       let rows: TableRecord[] = [];
@@ -353,7 +349,7 @@ export class Database {
     }
 
     let rows: TableRecord[] = [];
-    table.each((row: TableRecord, key: string | number) => {
+    table.each((row: TableRecord) => {
       //Should not continue to add rows
       if (rows.length >= condition.row_limit) return false;
       if (condition.validate(row)) rows.push(row);
@@ -368,24 +364,20 @@ export class Database {
       throw new Error(`Table "${table}" does not exist.`);
     }
 
-    return this.select_from_table({
-      table: this.tables[table],
-      condition:
-        condition == null
-          ? null
-          : condition instanceof QueryCondition
-          ? condition
-          : new QueryCondition(condition),
-    });
+    return this.select_from_table(
+      this.tables[table],
+      condition == null
+        ? null
+        : condition instanceof QueryCondition
+        ? condition
+        : new QueryCondition(condition)
+    );
   }
 
-  private select_count_from_table({
-    table,
-    condition,
-  }: {
-    table: Table;
-    condition?: QueryCondition | null;
-  }) {
+  private select_count_from_table(
+    table: Table,
+    condition?: QueryCondition | null
+  ) {
     //If condition is null, return the count of all the tables
     if (condition == null) return table.data_count;
 
@@ -404,24 +396,17 @@ export class Database {
       throw new Error(`Table "${table}" does not exist.`);
     }
 
-    return this.select_count_from_table({
-      table: this.tables[table],
-      condition:
-        condition == null
-          ? null
-          : condition instanceof QueryCondition
-          ? condition
-          : new QueryCondition(condition),
-    });
+    return this.select_count_from_table(
+      this.tables[table],
+      condition == null
+        ? null
+        : condition instanceof QueryCondition
+        ? condition
+        : new QueryCondition(condition)
+    );
   }
 
-  private delete_from_table({
-    table,
-    condition,
-  }: {
-    table: Table;
-    condition?: QueryCondition | null;
-  }) {
+  private delete_from_table(table: Table, condition?: QueryCondition | null) {
     //If condition equals null, just delete every single record.
     //Otherwise, only delete records for which the condition returns true.
     table.filter((row: TableRecord) => {
@@ -433,18 +418,30 @@ export class Database {
     table: string,
     condition?: QueryCondition | QueryConditionObject | null
   ) {
-    this.delete_from_table({
-      table: this.get_table(table),
-      condition:
-        condition == null
-          ? null
-          : condition instanceof QueryCondition
-          ? condition
-          : new QueryCondition(condition),
-    });
+    this.delete_from_table(
+      this.get_table(table),
+      condition == null
+        ? null
+        : condition instanceof QueryCondition
+        ? condition
+        : new QueryCondition(condition)
+    );
   }
 
-  table(name: string): Table | null {
-    return this.tables[name];
-  }
+  select_distinct() {}
+  distint = this.select_distinct;
 }
+
+export const INT = Schema.Datatype.INT;
+export const DOUBLE = Schema.Datatype.DOUBLE;
+export const STRING = Schema.Datatype.STRING;
+export const BOOLEAN = Schema.Datatype.BOOLEAN;
+
+// let db = new Database();
+// db.create_table("users", {
+//   rows: [
+//     { name: "username", type: STRING, unique: true },
+//     { name: "age", type: INT, unique: false },
+//   ],
+// });
+// db.insert("users", { age: 1.75, username: "Kiyaan" });

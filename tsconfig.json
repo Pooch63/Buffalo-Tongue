@@ -4,7 +4,8 @@
     "lib": ["ES2021", "DOM"],
     "target": "ES5",
     "moduleResolution": "NodeNext",
-    "module": "NodeNext"
+    "module": "NodeNext",
+    "sourceMap": true
   },
   "include": ["./src/*.ts"]
 }

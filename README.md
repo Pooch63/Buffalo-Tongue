@@ -25,14 +25,11 @@ Buffalo Tongue is structured like a traditional relational database, meaning tha
 you need to provide type information upon table creation. Here's a simple example:
 
 ```typescript
-db.create_table({
-  name: "users",
-  schema: {
-    rows: [
-      { name: "username", type: buffalo.STRING, unique: true },
-      { name: "age", type: buffalo.INT, unique: false },
-    ],
-  },
+db.create_table("users", {
+  rows: [
+    { name: "username", type: buffalo.STRING, unique: true },
+    { name: "age", type: buffalo.INT, unique: false },
+  ],
 });
 ```
 
@@ -40,20 +37,22 @@ We've created a table to store some user information. Obviously, two users are a
 We can see that with this example of inserting data:
 
 ```typescript
-db.insert({ table: "users", record: { age: 1, username: "Kiyaan" } });
-db.insert({ table: "users", record: { username: "Bob Smith", age: 1 } }); //Runs fine because age was not a unique column
-db.insert({ table: "users", record: { age: 10, username: "Sam" } });
-//The following throws an error because username "Kiyaan" already exists. For the rest of the demo, assume that we did not run this.
-db.insert({ table: "users", record: { age: 100, username: "Kiyaan" } });
+db.insert("users", { age: 1, username: "Kiyaan" });
+//Runs fine because age was not a unique column
+db.insert("users", { username: "Bob Smith", age: 1 });
+db.insert("users", { age: 10, username: "Sam" });
+//The following throws an error because username "Kiyaan" already exists.
+db.insert("users", { age: 100, username: "Kiyaan" });
+//The following throws an error because the column age was not provided
+db.insert("users", { username: "Kaneshka" });
+//The following is alright because even though there are unnecessary columns, all the required columns are there
+db.insert("users", { garbage: true, age: 10, username: "Jane Doe" });
 ```
 
 Getting data is just as easy. We can grab all the rows with ages greater than 6 by executing:
 
 ```typescript
-db.select({
-  table: "users",
-  condition: { age: { gte: 7 } },
-});
+db.select("users", { age: { gte: 7 } });
 
 //Which then returns:
 [{ username: "Kiyaan", age: 10 }];
@@ -62,23 +61,20 @@ db.select({
 Buffalo Tongue also supports default values. Here's an example where we store info about the items in a shop:
 
 ```typescript
-db.create_table({
-  name: "products",
-  schema: {
-    rows: [
-      //Note that we aren't specifying unique: false here. Rows default to not being unique
-      { name: "name", type: BuffaloTongue.STRING },
-      { name: "cost", type: BuffaloTongue.DOUBLE, default: 5.0 },
-    ],
-  },
+db.create_table("products", {
+  rows: [
+    //Note that we aren't specifying unique: false here. Rows default to not being unique
+    { name: "name", type: BuffaloTongue.STRING },
+    { name: "cost", type: BuffaloTongue.DOUBLE, default: 5.0 },
+  ],
 });
 ```
 
 If we then store two products like so:
 
 ```typescript
-db.insert({ table: "products", record: { name: "shoes", cost: 100 } });
-db.insert({ table: "products", record: { name: "gloves" } });
+db.insert("products", { name: "shoes", cost: 100 });
+db.insert("products", { name: "gloves" });
 ```
 
 And log the records:
@@ -112,18 +108,15 @@ If the validation function returns false, an error is thrown.
 Here's how we could implement that:
 
 ```typescript
-db.create_table({
-  name: "users",
-  schema: {
-    rows: [
-      //Note that we aren't specifying unique: false here. Rows default to not being unique
-      {
-        name: "username",
-        type: buffalo.STRING,
-        validation: (value: string) => value.length <= 40,
-      },
-    ],
-  },
+db.create_table("users", {
+  rows: [
+    //Note that we aren't specifying unique: false here. Rows default to not being unique
+    {
+      name: "username",
+      type: buffalo.STRING,
+      validation: (value: string) => value.length <= 40,
+    },
+  ],
 });
 ```
 
@@ -131,17 +124,11 @@ Now, let's insert some data!
 
 ```typescript
 //This is inserted without a problem
-db.insert({
-  table: "users",
-  record: { username: "This is pretty darn short." },
-});
+db.insert("users", { username: "This is pretty darn short." });
 
 //This throws an error
-db.insert({
-  table: "users",
-  record: {
-    username:
-      "This is an unnecessarily, egregiously, shockingly, utterly, DEVASTATINGLY long username. Seriously, you really can't let this happen.",
-  },
+db.insert("users", {
+  username:
+    "This is an unnecessarily, egregiously, shockingly, utterly, DEVASTATINGLY long username. Seriously, you really can't let this happen.",
 });
 ```

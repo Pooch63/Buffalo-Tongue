@@ -1,12 +1,16 @@
+# Buffalo Tongue Documentation
+
+_Note that if you attempt to use a function not referenced in the documentation, Buffalo Tongue's behavior is undefined._
+
 ## Buffalo Enum/Type Definitions
 
 ### Schema Information:
 
-enum `Datatype`
+type `Datatype`
 
 `INT | DOUBLE | STRING`
 
-These are the literal values. E.g., you would write `buffalo.Datatype.INT`.
+These are the literal values. E.g., you would write `buffalo.INT`.
 
 type `RowData`
 
@@ -50,15 +54,14 @@ type `QueryConditionObject`
 
 ```typescript
 {
-    //For every column in a row you try to insert
-    //If that column name is a value in the QueryConditionObject,
-    //it checks that value against the provided condition
-  [name in string]:
-  //Not equal, equal, <, >, <=, >=
+  //For every column in a row you try to insert
+  //If that column name is a value in the QueryConditionObject,
+  //it checks that value against the provided condition
+  [name in string]: //Not equal, equal, <, >, <=, >=
   //If any value is defined in this object, it is tested against the row data.
   //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3
   //You may define more than one of these conditions
-    | {
+  | {
         not_eq?: RowData;
         eq?: RowData;
         lt?: number;
@@ -66,10 +69,10 @@ type `QueryConditionObject`
         lte?: number;
         gte?: number;
       }
-      //Or, if this value is simply row data, it checks whether or not the column is equal to this value.
-      // It is equivalent to specifying the "eq" value in the object.
+    //Or, if this value is simply row data, it checks whether or not the column is equal to this value.
+    // It is equivalent to specifying the "eq" value in the object.
     | RowData;
-};
+}
 ```
 
 class `QueryCondition`
