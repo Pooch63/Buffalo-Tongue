@@ -19,7 +19,7 @@ type `RowData`
 type `Schema.ColumnInfo`
 
 ```typescript
-{
+type Schema.ColumnInfo = {
   //Name of column
   name: string;
   //Datatype
@@ -42,8 +42,8 @@ type `Schema.ColumnInfo`
 
 type `Schema.Table`
 
-```ts
-{
+```typescript
+type Schema.Table = {
   rows: Schema.ColumnInfo[];
 }
 ```
@@ -53,14 +53,18 @@ type `Schema.Table`
 type `QueryConditionObject`
 
 ```typescript
-{
+type QueryConditionObject = {
+  //For every row inserted, if provided, this function is called.
+  //If it returns false, the record is not validated against the condition.
+  //Note that this function is evaluated BEFORE checking the specifications for the columns.
+  //E.g., with { age: { lte: 0 }, $validation: (row) => row.username.length > 40 },
+  //first the { lte: 0 } part is evaluated for age. Only if the record passes that test is the $validation valled.
+  $validation?: (row: TableRecord) => boolean;
+} & {
   //For every column in a row you try to insert
   //If that column name is a value in the QueryConditionObject,
   //it checks that value against the provided condition
-  [name in string]: //Not equal, equal, <, >, <=, >=
-  //If any value is defined in this object, it is tested against the row data.
-  //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3
-  //You may define more than one of these conditions
+  [name in string]: //You may define more than one of these conditions //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3 //If any value is defined in this object, it is tested against the row data. //Not equal, equal, <, >, <=, >=
   | {
         not_eq?: RowData;
         eq?: RowData;
@@ -71,8 +75,11 @@ type `QueryConditionObject`
       }
     //Or, if this value is simply row data, it checks whether or not the column is equal to this value.
     // It is equivalent to specifying the "eq" value in the object.
-    | RowData;
-}
+    | RowData
+    //Or, if they specify a validation function, it will get the value and the key, and if it returns false,
+    //the record is invalid against the condition.
+    | ((value: RowData, key: TableKey) => boolean);
+};
 ```
 
 class `QueryCondition`
@@ -91,10 +98,11 @@ class `QueryCondition`
 
 type `Update`
 
+`Record<string, RowData>`
+
 When you call an update function, if a record meets the provided condition, this is a record of the values the
 columns should be set to. Each key is a column name, and each value is the column value.
 This will throw an error if you provide an incorrect row type for the column.
-`Record<string, RowData>`
 
 ## Buffalo Class Definitions
 

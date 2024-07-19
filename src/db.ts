@@ -1,9 +1,15 @@
 import colors from "colors/safe";
 
-export type RowData = number | string | boolean;
-export type TableRecord = Record<string, RowData>;
+const KEYWORDS = {
+  $validation: "true",
+};
+const VALIDATION_FUNC_NAME = "$validation";
+
+type RowData = number | string | boolean;
+type TableRecord = Record<string, RowData>;
+type TableKey = string | number;
 //If a table has a unique
-export type TableData = Record<string | number, TableRecord | null>;
+type TableData = Record<TableKey, TableRecord | null>;
 
 function value_to_string(value: RowData) {
   if (typeof value == "boolean") return colors.yellow(value ? "true" : "false");
@@ -76,7 +82,7 @@ namespace Schema {
 
     default?: RowData | null;
   }
-  export class Row {
+  export class Column {
     public name: string;
     public type: Schema.Datatype;
     public default?: RowData | null = null;
@@ -89,16 +95,22 @@ namespace Schema {
       if (info.unique != null) this.unique = info.unique;
       if (info.default != null) this.default = info.default;
       this.validation = info.validation;
+
+      if (KEYWORDS[this.name] != null) {
+        throw new Error(
+          `Column name "${this.name}" is invalid -- this word is reserved.`
+        );
+      }
     }
   }
 
   export class Table {
-    public rows: Schema.Row[];
+    public rows: Schema.Column[];
     public unique_key: string | null = null;
 
     constructor({ rows }: { rows: Schema.ColumnInfo[] }) {
-      let parsed_rows: Schema.Row[] = [];
-      for (let row of rows) parsed_rows.push(new Schema.Row(row));
+      let parsed_rows: Schema.Column[] = [];
+      for (let row of rows) parsed_rows.push(new Schema.Column(row));
 
       //Check if there's a duplicate row name
       let row_names: Record<string, any> = {};
@@ -161,7 +173,20 @@ namespace Schema {
   }
 }
 
+namespace Errors {
+  export class Nonexistent_Value extends Error {}
+  export class Bad_Type extends Error {}
+  export class Nonexistent_Column extends Error {}
+}
+
 type QueryConditionObject = {
+  //For every row inserted, if provided, this function is called.
+  //If it returns false, the record is not validated against the condition.
+  //Note that this function is evaluated BEFORE checking the specifications for the columns.
+  //E.g., with { age: { lte: 0 }, $validation: (row) => row.username.length > 40 },
+  //first the { lte: 0 } part is evaluated for age. Only if the record passes that test is the $validation valled.
+  $validation?: (row: TableRecord) => boolean;
+} & {
   //For every column in a row you try to insert
   //If that column name is a value in the QueryConditionObject,
   //it checks that value against the provided condition
@@ -176,8 +201,12 @@ type QueryConditionObject = {
       }
     //Or, if this value is simply row data, it checks whether or not the column is equal to this value.
     // It is equivalent to specifying the "eq" value in the object.
-    | RowData;
+    | RowData
+    //Or, if they specify a validation function, it will get the value and the key, and if it returns false,
+    //the record is invalid against the condition.
+    | ((value: RowData, key: TableKey) => boolean);
 };
+
 class QueryCondition {
   public conditions: (QueryCondition | QueryConditionObject)[] = [];
   public row_limit: number = Number.POSITIVE_INFINITY;
@@ -197,9 +226,18 @@ class QueryCondition {
     row: TableRecord;
     condition: QueryConditionObject;
   }): boolean {
+    //If they provided a custom validation function and it returned false, also return false
+    if (condition.$validation && !condition.$validation(row)) return false;
+
     for (let name in condition) {
+      //Make sure it's not the validation fuction
+      if (name == VALIDATION_FUNC_NAME) continue;
+
       let value = row[name];
       let data = condition[name];
+
+      //Is it a custom validation function?
+      if (typeof data == "function" && !data(value, name)) return false;
 
       //Is it just plain data?
       if (typeof data != "object") return value == data;
@@ -336,12 +374,6 @@ class Table {
   }
 }
 
-namespace Errors {
-  export class Nonexistent_Value extends Error {}
-  export class Bad_Type extends Error {}
-  export class Nonexistent_Column extends Error {}
-}
-
 export class Database {
   private tables: Record<string, Table> = {};
   get_table(table: string): Table {
@@ -355,7 +387,10 @@ export class Database {
     let parsed_schema = new Schema.Table({ rows: schema.rows });
     this.tables[name] = new Table({ name, schema: parsed_schema });
   }
-  public create = this.create_table;
+  //Create table alias
+  create(name: string, schema: { rows: Schema.ColumnInfo[] }) {
+    return this.create_table(name, schema);
+  }
 
   private insert_into_table(table: Table, record: TableRecord) {
     table.insert(record);
@@ -385,6 +420,7 @@ export class Database {
     });
     return rows;
   }
+
   select(
     table: string,
     condition?: QueryCondition | QueryConditionObject | null
@@ -426,7 +462,63 @@ export class Database {
         : new QueryCondition(condition)
     );
   }
-  public count = this.select_count;
+  //Select count alias
+  count(
+    table: string,
+    condition?: QueryCondition | QueryConditionObject | null
+  ) {
+    this.select_count(table, condition);
+  }
+
+  select_distinct(
+    table_name: string,
+    columns: string | string[],
+    condition?: QueryCondition | QueryConditionObject | null
+  ) {
+    let col_arr = typeof columns == "string" ? [columns] : columns;
+    let table = this.get_table(table_name);
+
+    //Make sure every column actually exists
+    for (let col of col_arr) {
+      if (!table.schema.col_exists(col)) {
+        throw new Errors.Nonexistent_Column(
+          `Select distinct requested distinct, nonexistent column "${col}"`
+        );
+      }
+    }
+
+    let parsed_condition =
+      condition == null
+        ? null
+        : condition instanceof QueryCondition
+        ? condition
+        : new QueryCondition(condition);
+
+    let distinct: Record<string, Record<string | number, TableRecord>> = {};
+    for (let col of table.schema.rows) distinct[col.name] = {};
+
+    let rows: TableRecord[] = [];
+    table.each((row: TableRecord, key: string | number) => {
+      if (condition && !parsed_condition.validate(row)) return;
+
+      //Have we already found a row with a distinct column with the same value as this one?
+      for (let col of col_arr) {
+        if (distinct[col][row[col].toString()] != null) return;
+        distinct[col][row[col].toString()] = row;
+      }
+      rows.push(row);
+    });
+
+    return rows;
+  }
+  //Select distinct alias
+  distinct(
+    table_name: string,
+    columns: string | string[],
+    condition?: QueryCondition | QueryConditionObject | null
+  ) {
+    return this.select_distinct(table_name, columns, condition);
+  }
 
   private delete_from_table(table: Table, condition?: QueryCondition | null) {
     //If condition equals null, just delete every single record.
@@ -448,39 +540,6 @@ export class Database {
         ? condition
         : new QueryCondition(condition)
     );
-  }
-
-  select_distinct(
-    table_name: string,
-    columns: string | string[],
-    condition?: QueryCondition | QueryConditionObject | null
-  ) {
-    let col_arr = typeof columns == "string" ? [columns] : columns;
-    let table = this.get_table(table_name);
-
-    //Make sure every column actually exists
-    for (let col of col_arr) {
-      if (!table.schema.col_exists(col)) {
-        throw new Errors.Nonexistent_Column(
-          `Select distinct requested distinct, nonexistent column "${col}"`
-        );
-      }
-    }
-
-    let distinct: Record<string, Record<string | number, TableRecord>> = {};
-    for (let col of table.schema.rows) distinct[col.name] = {};
-
-    let rows: TableRecord[] = [];
-    table.each((row: TableRecord, key: string | number) => {
-      //Have we already found a row with a distinct column with the same value as this one?
-      for (let col of col_arr) {
-        if (distinct[col][row[col].toString()] != null) return;
-        distinct[col][row[col].toString()] = row;
-      }
-      rows.push(row);
-    });
-
-    return rows;
   }
 
   update(
@@ -528,18 +587,23 @@ export const DOUBLE = Schema.Datatype.DOUBLE;
 export const STRING = Schema.Datatype.STRING;
 export const BOOLEAN = Schema.Datatype.BOOLEAN;
 
-// const db = new Database();
-// db.create_table("users", {
-//   rows: [
-//     { name: "username", type: STRING },
-//     { name: "age", type: INT },
-//   ],
-// });
-// db.insert("users", { age: 1, username: "Kiyaan" });
-// db.insert("users", { age: 2, username: "Hi!" });
-// db.insert("users", { age: 3, username: "Kiyaan" });
+const db = new Database();
+db.create_table("users", {
+  rows: [
+    { name: "username", type: STRING },
+    { name: "age", type: INT },
+  ],
+});
+db.insert("users", { age: 1, username: "Kiyaan" });
+db.insert("users", { age: 2, username: "Hi!" });
+db.insert("users", { age: 3, username: "Kiyaan" });
 
-// console.log(db.select("users"));
-// // console.log(db.update("users", { age: 2 }, { username: "yo" }));
-// console.log(db.select_distinct("users", ["username"]));
-// console.log(db.select("users"));
+console.log(
+  db.select("users", {
+    // age: (data: RowData) => data != 3,
+    $validation: (row: TableRecord) => row.username == "Hi!",
+  })
+);
+// console.log(db.update("users", { age: 2 }, { username: "yo" }));
+console.log(db.select_distinct("users", ["username"]));
+console.log(db.select("users"));

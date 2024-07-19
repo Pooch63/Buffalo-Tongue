@@ -1,3 +1,8 @@
+- ### v0.1.3 - Custom validation functions
+
+  Query condition objects now allow vlaidation functions that are called for every record to ensure they are valid.
+  Furthermore, a function can be specified for every column in a row to ensure that the column is valid as well.
+
 - ### v0.1.2 - Select Distinct, change to create table use
 
   Database now has select distinct class.

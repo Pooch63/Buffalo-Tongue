@@ -1,6 +1,7 @@
-export type RowData = number | string | boolean;
-export type TableRecord = Record<string, RowData>;
-export type TableData = Record<string | number, TableRecord | null>;
+type RowData = number | string | boolean;
+type TableRecord = Record<string, RowData>;
+type TableKey = string | number;
+type TableData = Record<TableKey, TableRecord | null>;
 declare namespace Schema {
     enum Datatype {
         INT = "integer",
@@ -19,7 +20,7 @@ declare namespace Schema {
         validation?: (value: any) => boolean;
         default?: RowData | null;
     }
-    class Row {
+    class Column {
         name: string;
         type: Schema.Datatype;
         default?: RowData | null;
@@ -28,7 +29,7 @@ declare namespace Schema {
         constructor(info: ColumnInfo);
     }
     class Table {
-        rows: Schema.Row[];
+        rows: Schema.Column[];
         unique_key: string | null;
         constructor({ rows }: {
             rows: Schema.ColumnInfo[];
@@ -39,6 +40,8 @@ declare namespace Schema {
     function get_unique_key(record: TableRecord, schema: Schema.Table): null | RowData;
 }
 type QueryConditionObject = {
+    $validation?: (row: TableRecord) => boolean;
+} & {
     [name in string]: {
         not_eq?: RowData;
         eq?: RowData;
@@ -46,7 +49,7 @@ type QueryConditionObject = {
         gt?: number;
         lte?: number;
         gte?: number;
-    } | RowData;
+    } | RowData | ((value: RowData, key: TableKey) => boolean);
 };
 declare class QueryCondition {
     conditions: (QueryCondition | QueryConditionObject)[];
@@ -77,19 +80,20 @@ export declare class Database {
     create_table(name: string, schema: {
         rows: Schema.ColumnInfo[];
     }): void;
-    create: (name: string, schema: {
+    create(name: string, schema: {
         rows: Schema.ColumnInfo[];
-    }) => void;
+    }): void;
     private insert_into_table;
     insert(table: string, record: TableRecord): void;
     private select_from_table;
     select(table: string, condition?: QueryCondition | QueryConditionObject | null): TableRecord[];
     private select_count_from_table;
     select_count(table: string, condition?: QueryCondition | QueryConditionObject | null): number;
-    count: (table: string, condition?: QueryCondition | QueryConditionObject | null) => number;
+    count(table: string, condition?: QueryCondition | QueryConditionObject | null): void;
+    select_distinct(table_name: string, columns: string | string[], condition?: QueryCondition | QueryConditionObject | null): TableRecord[];
+    distinct(table_name: string, columns: string | string[], condition?: QueryCondition | QueryConditionObject | null): TableRecord[];
     private delete_from_table;
     delete(table_name: string, condition?: QueryCondition | QueryConditionObject | null): void;
-    select_distinct(table_name: string, columns: string | string[], condition?: QueryCondition | QueryConditionObject | null): TableRecord[];
     update(table_name: string, update: Update, condition?: QueryCondition | QueryConditionObject | null): void;
 }
 export declare const INT = Schema.Datatype.INT;

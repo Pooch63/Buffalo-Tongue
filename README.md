@@ -5,6 +5,18 @@
 Buffalo Tongue DB is a fun, very small database that stores everything in memory. It does not store data in a file.
 It provides type checking, an extremely useful feature in my opinion.
 
+It also supports most database functions, including:
+
+- Create Table
+- Insert
+- Select
+- Select Distinct
+- Select Count
+- Update
+- Delete
+
+(and of course, conditions can be optionally included for every function).
+
 Using Buffalo Tongue is EXTREMELY simple. Installation is just like any other pacakge:
 
 ```
