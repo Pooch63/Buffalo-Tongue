@@ -1,3 +1,5 @@
+0. Change rows to columns in create table function.
+
 1. Allow database to be single table if you specify a schema in the constructor. If you do this, the following might happen:
 
    - When you try to run a function and specify the table, an error is thrown.
@@ -9,3 +11,5 @@
    Or, if you only want one column
 
 3. Add objects as a datatype, and maybe the option to provide a schema for those two.
+
+4. Maybe? In create table, allow overload with a simple array of column information.

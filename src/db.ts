@@ -587,23 +587,23 @@ export const DOUBLE = Schema.Datatype.DOUBLE;
 export const STRING = Schema.Datatype.STRING;
 export const BOOLEAN = Schema.Datatype.BOOLEAN;
 
-const db = new Database();
-db.create_table("users", {
-  rows: [
-    { name: "username", type: STRING },
-    { name: "age", type: INT },
-  ],
-});
-db.insert("users", { age: 1, username: "Kiyaan" });
-db.insert("users", { age: 2, username: "Hi!" });
-db.insert("users", { age: 3, username: "Kiyaan" });
+// const db = new Database();
+// db.create_table("users", {
+//   rows: [
+//     { name: "username", type: STRING },
+//     { name: "age", type: INT },
+//   ],
+// });
+// db.insert("users", { age: 1, username: "Kiyaan" });
+// db.insert("users", { age: 2, username: "Hi!" });
+// db.insert("users", { age: 3, username: "Kiyaan" });
 
-console.log(
-  db.select("users", {
-    // age: (data: RowData) => data != 3,
-    $validation: (row: TableRecord) => row.username == "Hi!",
-  })
-);
-// console.log(db.update("users", { age: 2 }, { username: "yo" }));
-console.log(db.select_distinct("users", ["username"]));
-console.log(db.select("users"));
+// console.log(
+//   db.select("users", {
+//     // age: (data: RowData) => data != 3,
+//     $validation: (row: TableRecord) => row.username == "Hi!",
+//   })
+// );
+// // console.log(db.update("users", { age: 2 }, { username: "yo" }));
+// console.log(db.select_distinct("users", ["username"]));
+// console.log(db.select("users"));

@@ -4,10 +4,13 @@ const fs = require("fs");
 const minified = terser.minify_sync(
   [fs.readFileSync("./lib/db.js").toString()],
   {
-    compress: true,
-    sourceMap: {
-      content: fs.readFileSync("./lib/db.js.map").toString(),
-      url: "./db.min.js.map",
+    // compress: true,
+    // sourceMap: {
+    //   content: fs.readFileSync("./lib/db.js.map").toString(),
+    //   url: "./db.min.js.map",
+    // },
+    mangle: {
+      properties: false,
     },
     format: {
       semicolons: false,
@@ -17,8 +20,5 @@ const minified = terser.minify_sync(
 
 console.log(`Minified source code`);
 
-fs.writeFileSync("./lib/db.min.js.map", minified.map);
+// fs.writeFileSync("./lib/db.min.js.map", minified.map);
 fs.writeFileSync("./lib/db.min.js", minified.code);
-
-fs.unlinkSync("./lib/db.js");
-fs.unlinkSync("./lib/db.js.map");

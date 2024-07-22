@@ -1,6 +1,8 @@
-const buffalo = require("../lib/db");
+//@jest-ignore
+const buffalo = require("../lib/db.min");
 
 const db = new buffalo.Database();
+
 db.create_table("users", {
   rows: [
     //Note that we aren't specifying unique: false here. Rows default to not being unique

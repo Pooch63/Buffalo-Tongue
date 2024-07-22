@@ -2,8 +2,7 @@
 
 (go to documentation.md for documentation)
 
-Buffalo Tongue DB is a fun, very small database that stores everything in memory. It does not store data in a file.
-It provides type checking, an extremely useful feature in my opinion.
+Buffalo Tongue DB is a fun, very small database with built-in type checking that stores everything in memory (not persistent).
 
 It also supports most database functions, including:
 
@@ -108,39 +107,4 @@ We see that the default of 5 activated for the gloves:
 ];
 ```
 
-Additional Features:
-
-## Custom Validation Functions:
-
-Say we want to make sure that usernames are not above some maximum length when inserting them into a database.
-If we insert users in multiple places in the code, it can be a bit unmaintable to run this check every time.
-
-Instead, Buffalo Tongue allows you to specify a custom validation that will be run every time an entry is inserted.
-If the validation function returns false, an error is thrown.
-Here's how we could implement that:
-
-```typescript
-db.create_table("users", {
-  rows: [
-    //Note that we aren't specifying unique: false here. Rows default to not being unique
-    {
-      name: "username",
-      type: buffalo.STRING,
-      validation: (value: string) => value.length <= 40,
-    },
-  ],
-});
-```
-
-Now, let's insert some data!
-
-```typescript
-//This is inserted without a problem
-db.insert("users", { username: "This is pretty darn short." });
-
-//This throws an error
-db.insert("users", {
-  username:
-    "This is an unnecessarily, egregiously, shockingly, utterly, DEVASTATINGLY long username. Seriously, you really can't let this happen.",
-});
-```
+Go to documentation.md to see all the neat features of Buffalo Tongue!
