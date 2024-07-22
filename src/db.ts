@@ -96,6 +96,17 @@ namespace Schema {
       if (info.default != null) this.default = info.default;
       this.validation = info.validation;
 
+      if (
+        info.default != null &&
+        !Schema.validate_type({ value: info.default, type: info.type })
+      ) {
+        throw new Error(
+          `Default value for column "${this.name}" does not match type ${
+            this.type
+          } (value was ${value_to_string(info.default)}})`
+        );
+      }
+
       if (KEYWORDS[this.name] != null) {
         throw new Error(
           `Column name "${this.name}" is invalid -- this word is reserved.`
@@ -177,6 +188,8 @@ namespace Errors {
   export class Nonexistent_Value extends Error {}
   export class Bad_Type extends Error {}
   export class Nonexistent_Column extends Error {}
+  export class Name_Already_Exists extends Error {}
+  export class Not_Enough_Info extends Error {}
 }
 
 type QueryConditionObject = {
@@ -237,7 +250,7 @@ class QueryCondition {
       let data = condition[name];
 
       //Is it a custom validation function?
-      if (typeof data == "function" && !data(value, name)) return false;
+      if (typeof data == "function") return data(value, name);
 
       //Is it just plain data?
       if (typeof data != "object") return value == data;
@@ -384,6 +397,13 @@ export class Database {
   }
 
   create_table(name: string, schema: { rows: Schema.ColumnInfo[] }) {
+    //Does the table already exist?
+    if (this.tables[name] != null) {
+      throw new Errors.Name_Already_Exists(
+        `Table name "${name}" already exists.`
+      );
+    }
+
     let parsed_schema = new Schema.Table({ rows: schema.rows });
     this.tables[name] = new Table({ name, schema: parsed_schema });
   }
