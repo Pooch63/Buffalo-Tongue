@@ -20,5 +20,5 @@
 4. Maybe? In create table, allow overload with a simple array of column information.
 
 5. Drop table.
-6. add required field to column info that, if false, means a value can be null. This required field defaults to false, but it is always true
+6. add required field to column info that, if false, means a value can be null. This required field defaults to true, but it is always false
    if you specify a default value. If you try to say it's false AND provide a default, an error is thrown.

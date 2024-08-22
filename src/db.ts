@@ -487,7 +487,7 @@ export class Database {
     table: string,
     condition?: QueryCondition | QueryConditionObject | null
   ) {
-    this.select_count(table, condition);
+    return this.select_count(table, condition);
   }
 
   select_distinct(

@@ -2,6 +2,8 @@
 
 _Note that if you attempt to use a function not referenced in the documentation, Buffalo Tongue's behavior is undefined._
 
+_Using a Buffalo Tongue function in a manner not detailed by this documentation will also result in undefined behavior._
+
 ## Buffalo Enum/Type Definitions
 
 ### Schema Information:
@@ -64,8 +66,8 @@ type QueryConditionObject = {
   //For every column in a row you try to insert
   //If that column name is a value in the QueryConditionObject,
   //it checks that value against the provided condition
-  [name in string]: //You may define more than one of these conditions //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3 //If any value is defined in this object, it is tested against the row data. //Not equal, equal, <, >, <=, >=
-  | {
+  [name in string]:  //You may define more than one of these conditions //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3 //If any value is defined in this object, it is tested against the row data. //Not equal, equal, <, >, <=, >=
+    | {
         not_eq?: RowData;
         eq?: RowData;
         lt?: number;

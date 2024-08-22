@@ -1,8 +1,8 @@
 {
   "name": "buffalo-tongue-db",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A TypeScript database library with built-in type checking",
-  "main": "./lib/db.min.js",
+  "main": "./lib/db.js",
   "types": "./lib/db.d.ts",
   "directories": {
     "lib": "lib"

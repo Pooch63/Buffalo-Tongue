@@ -126,7 +126,7 @@ describe("Select records", () => {
   db.insert("users", { username: "Bobby", age: 10 });
   db.insert("users", { username: "Sam", age: 6 });
 
-  test("Conditions are validly evaluated", () => {
+  test("Exact condition operations are evaluated correctly", () => {
     //Testing direct equality
     expect(db.select("users", { age: 10 })).toMatchObject([
       {
@@ -145,6 +145,8 @@ describe("Select records", () => {
         age: 6,
       },
     ]);
+  });
+  test("Custom validation functions are evaluated correctly", () => {
     //Testing validation function
     expect(db.select("users", { $validation: (row) => row.age != 6 })).toEqual([
       { username: "Kiyaan", age: 12 },
@@ -153,10 +155,7 @@ describe("Select records", () => {
     //Testing column-specific validation functions
     expect(
       db.select("users", {
-        username: (name) => {
-          console.log(name);
-          return name.length < 6;
-        },
+        username: (name) => name.length < 6,
       })
     ).toEqual([
       { username: "Bobby", age: 10 },

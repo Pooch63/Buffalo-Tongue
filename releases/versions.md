@@ -1,3 +1,5 @@
+- ### v0.1.4 - Fixed validation function bugs
+
 - ### v0.1.3 - Custom validation functions
 
   Query condition objects now allow vlaidation functions that are called for every record to ensure they are valid.
