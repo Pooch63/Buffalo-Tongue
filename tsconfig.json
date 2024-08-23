@@ -7,5 +7,6 @@
     "module": "NodeNext",
     "sourceMap": true
   },
-  "include": ["./src/*.ts"]
+  "include": ["./src/*.ts"],
+  "exclude": ["./sr/db_old.ts"]
 }

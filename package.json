@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "npx tsc --declaration",
-    "test": "jest"
+    "test": "jest",
+    "speed": "node performance/performance.js"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
   "homepage": "https://github.com/Pooch63/Buffalo-Tongue#readme",
   "dependencies": {
     "colors": "^1.4.0",
+    "taffydb": "^2.7.3",
     "terser": "^5.31.3"
   },
   "devDependencies": {

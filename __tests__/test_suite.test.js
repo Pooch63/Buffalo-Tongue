@@ -2,8 +2,8 @@ const { describe, test, expect } = require("@jest/globals");
 
 const buffalo = require("../lib/db");
 
-const db = new buffalo.Database();
-db.create_table("test_types", {
+const types_db = new buffalo.Database();
+types_db.create_table("test_types", {
   rows: [
     { name: "dbool", type: buffalo.BOOLEAN, default: true },
     { name: "dstring", type: buffalo.STRING, default: "STRING" },
@@ -64,23 +64,23 @@ describe("Create Table", () => {
 
 describe("Insert records", () => {
   test("Inserting bad type into boolean should throw", () => {
-    expect(() => db.insert("test_types", { dbool: 1 })).toThrow();
-    expect(() => db.insert("test_types", { dbool: "Hey!" })).toThrow();
-    expect(() => db.insert("test_types", { dbool: 1.89 })).toThrow();
+    expect(() => types_db.insert("test_types", { dbool: 1 })).toThrow();
+    expect(() => types_db.insert("test_types", { dbool: "Hey!" })).toThrow();
+    expect(() => types_db.insert("test_types", { dbool: 1.89 })).toThrow();
   });
   test("Inserting bad type into string should throw", () => {
-    expect(() => db.insert("test_types", { dstring: false })).toThrow();
-    expect(() => db.insert("test_types", { dstring: 1 })).toThrow();
-    expect(() => db.insert("test_types", { dstring: 1.89 })).toThrow();
+    expect(() => types_db.insert("test_types", { dstring: false })).toThrow();
+    expect(() => types_db.insert("test_types", { dstring: 1 })).toThrow();
+    expect(() => types_db.insert("test_types", { dstring: 1.89 })).toThrow();
   });
   test("Inserting bad type into int should throw", () => {
-    expect(() => db.insert("test_types", { dint: false })).toThrow();
-    expect(() => db.insert("test_types", { dint: "Hey!" })).toThrow();
-    expect(() => db.insert("test_types", { dint: 1.89 })).toThrow();
+    expect(() => types_db.insert("test_types", { dint: false })).toThrow();
+    expect(() => types_db.insert("test_types", { dint: "Hey!" })).toThrow();
+    expect(() => types_db.insert("test_types", { dint: 1.89 })).toThrow();
   });
   test("Inserting bad type into double should throw", () => {
-    expect(() => db.insert("test_types", { ddouble: false })).toThrow();
-    expect(() => db.insert("test_types", { ddouble: "Hey!" })).toThrow();
+    expect(() => types_db.insert("test_types", { ddouble: false })).toThrow();
+    expect(() => types_db.insert("test_types", { ddouble: "Hey!" })).toThrow();
   });
 
   test("Not providing required columns should throw", () => {
@@ -105,7 +105,7 @@ describe("Insert records", () => {
 
   test("Inserting valid type should be okay", () => {
     expect(() =>
-      db.insert("test_types", {
+      types_db.insert("test_types", {
         dbool: true,
         dstring: "",
         dint: 1,
@@ -116,26 +116,26 @@ describe("Insert records", () => {
 });
 
 describe("Select records", () => {
-  db.create_table("users", {
+  types_db.create_table("users", {
     rows: [
       { name: "username", type: buffalo.STRING, unique: false },
       { name: "age", type: buffalo.INT },
     ],
   });
-  db.insert("users", { username: "Kiyaan", age: 12 });
-  db.insert("users", { username: "Bobby", age: 10 });
-  db.insert("users", { username: "Sam", age: 6 });
+  types_db.insert("users", { username: "Kiyaan", age: 12 });
+  types_db.insert("users", { username: "Bobby", age: 10 });
+  types_db.insert("users", { username: "Sam", age: 6 });
 
   test("Exact condition operations are evaluated correctly", () => {
     //Testing direct equality
-    expect(db.select("users", { age: 10 })).toMatchObject([
+    expect(types_db.select("users", { age: 10 })).toMatchObject([
       {
         username: "Bobby",
         age: 10,
       },
     ]);
     //Testing lte
-    expect(db.select("users", { age: { lte: 11 } })).toMatchObject([
+    expect(types_db.select("users", { age: { lte: 11 } })).toMatchObject([
       {
         username: "Bobby",
         age: 10,
@@ -148,18 +148,35 @@ describe("Select records", () => {
   });
   test("Custom validation functions are evaluated correctly", () => {
     //Testing validation function
-    expect(db.select("users", { $validation: (row) => row.age != 6 })).toEqual([
+    expect(
+      types_db.select("users", { $validation: (row) => row.age != 6 })
+    ).toEqual([
       { username: "Kiyaan", age: 12 },
       { username: "Bobby", age: 10 },
     ]);
     //Testing column-specific validation functions
     expect(
-      db.select("users", {
+      types_db.select("users", {
         username: (name) => name.length < 6,
       })
     ).toEqual([
       { username: "Bobby", age: 10 },
       { username: "Sam", age: 6 },
     ]);
+  });
+});
+
+describe("Delete Table", () => {
+  const db = new buffalo.Database();
+  db.create_table("TABLE", { rows: [] });
+
+  db.drop("TABLE");
+
+  test("Drop table successfully deletes the table", () => {
+    expect(() => db.insert("TABLE", {})).toThrow();
+  });
+
+  test("Drop nonexistent table throws", () => {
+    expect(() => db.drop("i_dont_exist")).toThrow();
   });
 });

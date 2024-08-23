@@ -126,16 +126,16 @@ class `Database`
   - <span style="color:#FF7F7F">@param</span> - schema (`Schema.Table`)
     The table schema
 
-  - <span style="color:#FF7F7F">@return</span> `null`
+  - <span style="color:#FF7F7F">@return</span> `void`
 
 - ### insert
 
   - <span style="color:#FF7F7F">@param</span> - table (`string`)
     The table name
-  - <span style="color:#FF7F7F">@param</span> - record (`TableRecord`)
+  - <span style="color:#FF7F7F">@param</span> - ...records (`TableRecord[]`)
     Record to insert
 
-  - <span style="color:#FF7F7F">@return</span> `null`
+  - <span style="color:#FF7F7F">@return</span> `void`
 
 - ### select
 
@@ -168,7 +168,7 @@ class `Database`
   - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject | null`)
     Condition to check records against. Only records that meet this condition are deleted.
 
-  - <span style="color:#FF7F7F">@return</span> `null`
+  - <span style="color:#FF7F7F">@return</span> `void`
 
 - ### update
 
@@ -182,4 +182,11 @@ class `Database`
   - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject | null`)
     Condition to check records against. Only records that meet this condition are updated.
 
-  - <span style="color:#FF7F7F">@return</span> `null`
+  - <span style="color:#FF7F7F">@return</span> `void`
+
+- ### drop_table (alias `drop`)
+
+  - <span style="color:#FF7F7F">@param</span> - table (`string`)
+    The table name
+
+  - <span style="color:#FF7F7F">@return</span> `void`

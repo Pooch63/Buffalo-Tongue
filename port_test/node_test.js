@@ -1,4 +1,3 @@
-//@jest-ignore
 const buffalo = require("../lib/db");
 
 const db = new buffalo.Database();
