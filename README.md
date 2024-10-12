@@ -37,7 +37,7 @@ you need to provide type information upon table creation. Here's a simple exampl
 
 ```typescript
 db.create_table("users", {
-  rows: [
+  columns: [
     { name: "username", type: buffalo.STRING, unique: true },
     { name: "age", type: buffalo.INT, unique: false },
   ],
@@ -73,8 +73,8 @@ Buffalo Tongue also supports default values. Here's an example where we store in
 
 ```typescript
 db.create_table("products", {
-  rows: [
-    //Note that we aren't specifying unique: false here. Rows default to not being unique
+  columns: [
+    //Note that we aren't specifying unique: false here. Columns default to not being unique
     { name: "name", type: BuffaloTongue.STRING },
     { name: "cost", type: BuffaloTongue.DOUBLE, default: 5.0 },
   ],

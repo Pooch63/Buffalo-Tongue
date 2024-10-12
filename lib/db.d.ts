@@ -19,10 +19,10 @@ export declare class Database {
     private tables;
     get_table(table: string): Table;
     create_table(name: string, schema: {
-        rows: Schema.ColumnInfo[];
+        columns: Schema.ColumnInfo[];
     }): void;
     create(name: string, schema: {
-        rows: Schema.ColumnInfo[];
+        columns: Schema.ColumnInfo[];
     }): void;
     private insert_into_table;
     insert(table: string, ...records: TableRecord[]): void;

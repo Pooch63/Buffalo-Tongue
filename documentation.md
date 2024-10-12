@@ -46,7 +46,7 @@ type `Schema.Table`
 
 ```typescript
 type Schema.Table = {
-  rows: Schema.ColumnInfo[];
+  columns: Schema.ColumnInfo[];
 }
 ```
 

@@ -3,8 +3,8 @@ const buffalo = require("../lib/db");
 const db = new buffalo.Database();
 
 db.create_table("users", {
-  rows: [
-    //Note that we aren't specifying unique: false here. Rows default to not being unique
+  columns: [
+    //Note that we aren't specifying unique: false here. Columns default to not being unique
     {
       name: "username",
       type: buffalo.STRING,

@@ -1,6 +1,6 @@
 0. Change rows to columns in create table function.
 
-0.5. Maybe? In create table, it should just be { rows: { a: {type: buffalo.STRING} } } instead of { rows: [ { name: "a", type: buffalo.STRNIG } ] }
+0.5. Maybe? In create table, it should just be { columns: { a: {type: buffalo.STRING} } } instead of { columns: [ { name: "a", type: buffalo.STRNIG } ] }
 
 1. Allow database to be single table if you specify a schema in the constructor. If you do this, the following might happen:
 

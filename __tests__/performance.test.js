@@ -11,8 +11,8 @@ var product_db = TAFFY.taffy([
 const db = new buffalo.Database();
 
 db.create_table("catalog", {
-  rows: [
-    //Note that we aren't specifying unique = false here. Rows default to not being unique
+  columns: [
+    //Note that we aren't specifying unique = false here. Columns default to not being unique
     {
       name: "name",
       type: buffalo.STRING,

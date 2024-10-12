@@ -4,7 +4,7 @@ const buffalo = require("../lib/db");
 
 const types_db = new buffalo.Database();
 types_db.create_table("test_types", {
-  rows: [
+  columns: [
     { name: "dbool", type: buffalo.BOOLEAN, default: true },
     { name: "dstring", type: buffalo.STRING, default: "STRING" },
     { name: "dint", type: buffalo.INT, default: 1 },
@@ -14,40 +14,26 @@ types_db.create_table("test_types", {
 
 describe("Create Table", () => {
   const db = new buffalo.Database();
-  db.create_table("TABLE", { rows: [] });
+  db.create_table("TABLE", { columns: [] });
 
   /** Errors: */
   test("More than one unique column throws", () => {
     expect(() =>
       db.create_table("test", {
-        rows: [
+        columns: [
           { name: "a", type: buffalo.STRING, unique: true },
           { name: "b", type: buffalo.STRING, unique: true },
         ],
       })
     ).toThrow();
   });
-  // test("Did not provide name in row information to throw", () => {
-  //   expect(() =>
-  //     db.create_table("test", {
-  //       rows: [{ type: buffalo.STRING }],
-  //     })
-  //   ).toThrow();
-  // });
-  // test("Did not provide type in row information should throw", () => {
-  //   expect(() =>
-  //     db.create_table("test", {
-  //       rows: [{ name: "a" }],
-  //     })
-  //   ).toThrow();
-  // });
   test("Creating table with same name as another should throw", () => {
-    expect(() => db.create_table("TABLE", { rows: [] })).toThrow();
+    expect(() => db.create_table("TABLE", { columns: [] })).toThrow();
   });
   test("Default's type does not match column type should throw", () => {
     expect(() =>
       db.create_table("test", {
-        rows: [{ name: "row", type: buffalo.INT, default: 1.5 }],
+        columns: [{ name: "row", type: buffalo.INT, default: 1.5 }],
       })
     );
   });
@@ -56,7 +42,7 @@ describe("Create Table", () => {
   test("Normal create table should pass", () => {
     expect(() =>
       db.create_table("test", {
-        rows: [{ name: "a", type: buffalo.STRING }],
+        columns: [{ name: "a", type: buffalo.STRING }],
       })
     ).not.toThrow();
   });
@@ -86,7 +72,7 @@ describe("Insert records", () => {
   test("Not providing required columns should throw", () => {
     const db2 = new buffalo.Database();
     db2.create_table("table", {
-      rows: [
+      columns: [
         { name: "required", type: buffalo.STRING },
         { name: "optional", type: buffalo.STRING, default: "DEFAULT" },
       ],
@@ -96,7 +82,7 @@ describe("Insert records", () => {
   test("Inserting two records with same value in unique column should throw", () => {
     const db3 = new buffalo.Database();
     db3.create_table("table", {
-      rows: [{ name: "unique", type: buffalo.STRING, unique: true }],
+      columns: [{ name: "unique", type: buffalo.STRING, unique: true }],
     });
 
     db3.insert("table", { unique: "a" });
@@ -117,7 +103,7 @@ describe("Insert records", () => {
 
 describe("Select records", () => {
   types_db.create_table("users", {
-    rows: [
+    columns: [
       { name: "username", type: buffalo.STRING, unique: false },
       { name: "age", type: buffalo.INT },
     ],
@@ -168,7 +154,7 @@ describe("Select records", () => {
 
 describe("Delete Table", () => {
   const db = new buffalo.Database();
-  db.create_table("TABLE", { rows: [] });
+  db.create_table("TABLE", { columns: [] });
 
   db.drop("TABLE");
 

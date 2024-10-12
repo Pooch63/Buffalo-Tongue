@@ -12,7 +12,7 @@ export type QueryConditionObject = {
     } | RowData | ((value: RowData, key: TableKey) => boolean);
 };
 export declare class QueryCondition {
-    conditions: (QueryCondition | QueryConditionObject)[];
+    conditions: QueryConditionObject[];
     row_limit: number;
     or(condition: QueryCondition | QueryConditionObject): this;
     limit(limit: number): this;

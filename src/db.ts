@@ -30,7 +30,7 @@ class Table {
     }
 
     //Add any defaults necessary
-    for (let row of this.schema.rows) {
+    for (let row of this.schema.columns) {
       if (record[row.name] == null) record[row.name] = row.default;
     }
 
@@ -42,7 +42,7 @@ class Table {
       }
     }
 
-    for (let row of this.schema.rows) {
+    for (let row of this.schema.columns) {
       if (typeof row.validation == "function") {
         if (!row.validation(record[row.name])) {
           throw new Error(
@@ -114,7 +114,7 @@ export class Database {
     return this.tables[table];
   }
 
-  create_table(name: string, schema: { rows: Schema.ColumnInfo[] }) {
+  create_table(name: string, schema: { columns: Schema.ColumnInfo[] }) {
     //Does the table already exist?
     if (this.tables[name] != null) {
       throw new Errors.Name_Already_Exists(
@@ -122,11 +122,11 @@ export class Database {
       );
     }
 
-    let parsed_schema = new Schema.Table({ rows: schema.rows });
+    let parsed_schema = new Schema.Table({ columns: schema.columns });
     this.tables[name] = new Table({ name, schema: parsed_schema });
   }
   //Create table alias
-  create(name: string, schema: { rows: Schema.ColumnInfo[] }) {
+  create(name: string, schema: { columns: Schema.ColumnInfo[] }) {
     return this.create_table(name, schema);
   }
 
@@ -144,11 +144,11 @@ export class Database {
   ): TableRecord[] {
     //If no condition was proivded, literally just return every row
     if (condition == null) {
-      let rows: TableRecord[] = [];
-      table.each((row: TableRecord) => {
-        rows.push(row);
+      let columns: TableRecord[] = [];
+      table.each((col: TableRecord) => {
+        columns.push(col);
       });
-      return rows;
+      return columns;
     }
 
     let rows: TableRecord[] = [];
@@ -233,7 +233,7 @@ export class Database {
         : new QueryCondition(condition);
 
     let distinct: Record<string, Record<string | number, TableRecord>> = {};
-    for (let col of table.schema.rows) distinct[col.name] = {};
+    for (let col of table.schema.columns) distinct[col.name] = {};
 
     let rows: TableRecord[] = [];
     table.each((row: TableRecord, key: string | number) => {
@@ -294,7 +294,7 @@ export class Database {
         : new QueryCondition(condition);
 
     //Validate that every type in the update object matches the column type
-    for (let col of table.schema.rows) {
+    for (let col of table.schema.columns) {
       if (
         update[col.name] != null &&
         !Schema.validate_type({ value: update[col.name], type: col.type })
@@ -337,21 +337,21 @@ export const BOOLEAN = Schema.Datatype.BOOLEAN;
 
 const db = new Database();
 db.create_table("users", {
-  rows: [
+  columns: [
     { name: "username", type: STRING },
     { name: "age", type: INT },
   ],
 });
 db.insert("users", { age: 1, username: "Kiyaan" }, { age: 2, username: "Hi!" });
 // db.insert("users", { age: 2, username: "Hi!" });
-db.insert("users", { age: 3, username: "Kiyaan" });
+db.insert("users", { username: "Kiyaan" });
 
-console.log(
-  db.count("users", {
-    // age: (data: RowData) => data != 3,
-    $validation: (row: TableRecord) => row.username == "Hi!",
-  })
-);
-// console.log(db.update("users", { age: 2 }, { username: "yo" }));
-console.log(db.select_distinct("users", ["username"]));
-console.log(db.select("users"));
+// console.log(
+//   db.count("users", {
+//     // age: (data: RowData) => data != 3,
+//     $validation: (row: TableRecord) => row.username == "Hi!",
+//   })
+// );
+// // console.log(db.update("users", { age: 2 }, { username: "yo" }));
+// console.log(db.select_distinct("users", ["username"]));
+// console.log(db.select("users"));

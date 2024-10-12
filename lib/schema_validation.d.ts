@@ -26,12 +26,12 @@ export declare namespace Schema {
         constructor(info: ColumnInfo);
     }
     class Table {
-        rows: Schema.Column[];
+        columns: Schema.Column[];
         unique_key: string | null;
-        constructor({ rows }: {
-            rows: Schema.ColumnInfo[];
+        constructor({ columns }: {
+            columns: Schema.ColumnInfo[];
         });
-        col_exists(col: string): boolean;
+        col_exists(col_name: string): boolean;
         validate(record: TableRecord): boolean;
     }
     function get_unique_key(record: TableRecord, schema: Schema.Table): null | RowData;
