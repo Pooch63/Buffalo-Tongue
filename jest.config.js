@@ -155,8 +155,8 @@ const config = {
 
   // The glob patterns Jest uses to detect test files
   // testMatch: [
-  //   "**/__tests__/**/*.[jt]s?(x)",
-  //   "**/?(*.)+(spec|test).[tj]s?(x)"
+  // "**/__tests__/**/*.[jt]s?(x)",
+  // "**/?(*.)+(spec|test).[tj]s?(x)"
   // ],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
@@ -165,7 +165,8 @@ const config = {
   // ],
 
   // The regexp pattern or array of patterns that Jest uses to detect test files
-  // testRegex: [],
+  // Only allow Jest to access files in the __tests__ folder that have "jest." in them
+  testRegex: ["__tests__/.*jest\\..*$"],
 
   // This option allows the use of a custom results processor
   // testResultsProcessor: undefined,

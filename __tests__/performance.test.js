@@ -1,7 +1,6 @@
 const colors = require("colors/safe");
 const TAFFY = require("taffydb");
 
-//@jest-ignore
 const buffalo = require("../lib/db");
 
 var product_db = TAFFY.taffy([
@@ -13,7 +12,7 @@ const db = new buffalo.Database();
 
 db.create_table("catalog", {
   rows: [
-    //Note that we aren't specifying unique: false here. Rows default to not being unique
+    //Note that we aren't specifying unique = false here. Rows default to not being unique
     {
       name: "name",
       type: buffalo.STRING,
@@ -54,7 +53,7 @@ let tests = [
         name: "asd" + i.toString(),
         price: Math.random(),
       }),
-    iter: 1_000_000,
+    iter: 1_000_000 / 1000,
   },
   {
     name: "Select",
@@ -71,7 +70,7 @@ let tests = [
         name: { like: "asd100000" },
       });
     },
-    iter: 1_000,
+    iter: 1_000_000,
   },
 ];
 
@@ -91,8 +90,8 @@ function test(buffalo_test, taffy_test, iter) {
   let taffy_won = taffy_time < buffalo_time;
   let tie = taffy_time == buffalo_time;
 
-  let taffy_color = tie ? "yellow" : taffy_won ? "green" : "white";
-  let buffalo_color = tie ? "yellow" : taffy_won ? "white" : "green";
+  let taffy_color = tie ? "yellow" : taffy_won ? "green" : "red";
+  let buffalo_color = tie ? "yellow" : taffy_won ? "red" : "green";
 
   let taffy_stat =
     taffy_won && !tie

@@ -29,10 +29,14 @@ export type QueryConditionObject = {
 };
 
 export class QueryCondition {
-  public conditions: (QueryCondition | QueryConditionObject)[] = [];
+  public conditions: QueryConditionObject[] = [];
   public row_limit: number = Number.POSITIVE_INFINITY;
   or(condition: QueryCondition | QueryConditionObject): this {
-    this.conditions.push(condition);
+    if (condition instanceof QueryCondition) {
+      for (let subcondition of condition.conditions) {
+        this.conditions.push(subcondition);
+      }
+    } else this.conditions.push(condition);
     return this;
   }
   limit(limit: number): this {
@@ -40,22 +44,19 @@ export class QueryCondition {
     return this;
   }
 
-  private validate_against_condition({
-    row,
-    condition,
-  }: {
-    row: TableRecord;
-    condition: QueryConditionObject;
-  }): boolean {
+  private validate_against_condition(
+    row: TableRecord,
+    condition: QueryConditionObject
+  ): boolean {
     //If they provided a custom validation function and it returned false, also return false
     if (condition.$validation && !condition.$validation(row)) return false;
 
     for (let name in condition) {
-      //Make sure it's not a seperate value that doesn't describe the column, like $validation
-      if (row[name] == undefined) continue;
-
       let value = row[name];
       let data = condition[name];
+
+      //Make sure it's not a seperate value that doesn't describe the column, like $validation
+      if (value == undefined) continue;
 
       //Is it a custom validation function?
       if (typeof data == "function") return data(value, name);
@@ -87,11 +88,10 @@ export class QueryCondition {
     return true;
   }
   validate(row: TableRecord): boolean {
+    if (this.conditions.length == 0)
+      return this.validate_against_condition(row, this.conditions[0]);
     for (let condition of this.conditions) {
-      if (condition instanceof QueryCondition) {
-        if (!condition.validate(row)) return false;
-      } else if (!this.validate_against_condition({ row, condition }))
-        return false;
+      if (!this.validate_against_condition(row, condition)) return false;
     }
     return true;
   }

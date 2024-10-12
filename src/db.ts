@@ -159,7 +159,6 @@ export class Database {
     });
     return rows;
   }
-
   select(
     table: string,
     condition?: QueryCondition | QueryConditionObject | null
