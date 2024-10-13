@@ -32,6 +32,8 @@ type Schema.ColumnInfo = {
   //try to insert two values for this column that are the same, an error will be thrown.
   //More details further down.
   unique?: boolean = false;
+  //Is this column allowed to be null?
+  nullable?: boolean = false;
   //Default value if you do not provide an explicit value when inserting a value.
   //More details further down.
   default?: RowData;

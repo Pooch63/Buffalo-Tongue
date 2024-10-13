@@ -1,0 +1,13 @@
+node_modules
+__tests__
+
+build.bat
+
+.npmignore
+.gitignore
+.gitattributes
+
+tsconfig.json
+jest.config.js
+
+coverage

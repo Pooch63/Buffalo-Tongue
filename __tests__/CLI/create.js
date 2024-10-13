@@ -42,17 +42,14 @@ function SQL_TYPE_TO_BUFFALO_TYPE(type) {
 module.exports = function (ast, db) {
   let columns = [];
 
-  console.log(ast.create_definitions);
-
   for (let col of ast.create_definitions) {
     let type = col.definition.dataType.toUpperCase();
     columns.push({
       name: col.column.column,
       type: SQL_TYPE_TO_BUFFALO_TYPE(type),
       unique: col.unique == "unique",
+      nullable: col.nullable?.value != "not null",
       $validation: (value) => {
-        if (col.nullable.value == "not null" && value == null) return false;
-
         if (value == null) return true;
 
         if (type == "BOOLEAN" || type == "BIT") return value == 0 || value == 1;

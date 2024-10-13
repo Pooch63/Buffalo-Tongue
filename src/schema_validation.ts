@@ -44,17 +44,18 @@ export namespace Schema {
     name: string;
     type: Schema.Datatype;
     unique?: boolean;
+    nullable?: boolean;
+    default?: RowData | null;
 
     //If provided, run the function on every row entered. If it returns false, an error is returned.
     validation?: (value: any) => boolean;
-
-    default?: RowData | null;
   }
   export class Column {
     public name: string;
     public type: Schema.Datatype;
     public default?: RowData | null = null;
     public unique?: boolean = false;
+    public nullable?: boolean = false;
     public validation?: (value: RowData) => boolean;
 
     constructor(info: ColumnInfo) {
@@ -62,6 +63,7 @@ export namespace Schema {
       this.type = info.type;
       if (info.unique != null) this.unique = info.unique;
       if (info.default != null) this.default = info.default;
+      if (info.nullable != null) this.nullable = info.nullable;
       this.validation = info.validation;
 
       if (
@@ -84,54 +86,54 @@ export namespace Schema {
   }
 
   export class Table {
-    public rows: Schema.Column[];
+    public columns: Schema.Column[];
     public unique_key: string | null = null;
 
-    constructor({ rows }: { rows: Schema.ColumnInfo[] }) {
-      let parsed_rows: Schema.Column[] = [];
-      for (let row of rows) parsed_rows.push(new Schema.Column(row));
+    constructor({ columns }: { columns: Schema.ColumnInfo[] }) {
+      let parsed_cols: Schema.Column[] = [];
+      for (let col of columns) parsed_cols.push(new Schema.Column(col));
 
       //Check if there's a duplicate row name
-      let row_names: Record<string, any> = {};
-      for (let row of parsed_rows) {
-        if (row_names[row.name] != null) {
-          throw new Error(`Duplicate row "${row.name}"`);
+      let col_names: Record<string, any> = {};
+      for (let col of parsed_cols) {
+        if (col_names[col.name] != null) {
+          throw new Error(`Duplicate row "${col.name}"`);
         }
-        if (row.unique) {
+        if (col.unique) {
           //Has there ALREADY BEEN a unique key?
           if (this.unique_key != null) {
             throw new Error(
-              `Table may not have two unique keys. Rows "${this.unique_key}" and "${row.name}" were both declared as unique.`
+              `Table may not have two unique keys. Columns "${this.unique_key}" and "${col.name}" were both declared as unique.`
             );
           }
-          this.unique_key = row.name;
+          this.unique_key = col.name;
         }
       }
 
-      this.rows = parsed_rows;
+      this.columns = parsed_cols;
     }
 
     //Does a column exist with the given name?
     //Warning: not very performant. Room for improvement, but it should only be called
     //once per database function
-    col_exists(col: string): boolean {
-      for (let row of this.rows) if (row.name == col) return true;
+    col_exists(col_name: string): boolean {
+      for (let col of this.columns) if (col.name == col_name) return true;
       return false;
     }
 
     //Is the record valid for the table?
     validate(record: TableRecord): boolean {
-      for (let row of this.rows) {
-        let value = record[row.name] ?? row.default;
-        if (value == null) {
+      for (let col of this.columns) {
+        let value = record[col.name] ?? col.default;
+        if (value == null && !col.nullable) {
           throw new Error(
-            `Unable to insert record -- row "${row.name}" was not included, and no default exists.`
+            `Unable to insert record -- row "${col.name}" was not included, it cannot be null, and no default exists.`
           );
         }
-        if (!Schema.validate_type({ value, type: row.type })) {
+        if (value != null && !Schema.validate_type({ value, type: col.type })) {
           throw new Error(
-            `Column "${row.name}" is not of valid type (valid type is of ${
-              row.type
+            `Column "${col.name}" is not of valid type (valid type is of ${
+              col.type
             }, instead got value ${value_to_string(
               value
             )} as ${value_type_as_string(value)})`

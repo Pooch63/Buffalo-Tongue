@@ -69,16 +69,29 @@ describe("Insert records", () => {
     expect(() => types_db.insert("test_types", { ddouble: "Hey!" })).toThrow();
   });
 
-  test("Not providing required columns should throw", () => {
+  test("Not providing value to non-nullable column should throw", () => {
     const db2 = new buffalo.Database();
     db2.create_table("table", {
-      columns: [
-        { name: "required", type: buffalo.STRING },
-        { name: "optional", type: buffalo.STRING, default: "DEFAULT" },
-      ],
+      columns: [{ name: "required", type: buffalo.STRING }],
     });
     expect(() => db2.insert("table", {})).toThrow();
   });
+  test("Not providing column to nullable column should be fine", () => {
+    const db2 = new buffalo.Database();
+    db2.create_table("table", {
+      columns: [{ name: "nullable", type: buffalo.INT, nullable: true }],
+    });
+    expect(() => db2.insert("table", {})).not.toThrow();
+  });
+  test("Default values should be inserted", () => {
+    const db2 = new buffalo.Database();
+    db2.create_table("table", {
+      columns: [{ name: "default", type: buffalo.STRING, default: "asd" }],
+    });
+    db2.insert("table", {});
+    expect(db2.select("table")[0]["default"]).toEqual("asd");
+  });
+
   test("Inserting two records with same value in unique column should throw", () => {
     const db3 = new buffalo.Database();
     db3.create_table("table", {

@@ -4,7 +4,7 @@
 
 Buffalo Tongue DB is a fun, very small database with built-in type checking that stores everything in memory (not persistent).
 
-It also supports most database functions, including:
+It also supports certain database functions, including:
 
 - Create Table
 - Insert
@@ -14,7 +14,7 @@ It also supports most database functions, including:
 - Update
 - Delete
 
-(and of course, conditions can be optionally included for every function).
+(and of course, conditions can be optionally included for select and update).
 
 Using Buffalo Tongue is EXTREMELY simple. Installation is just like any other pacakge:
 
@@ -36,6 +36,7 @@ Buffalo Tongue is structured like a traditional relational database, meaning tha
 you need to provide type information upon table creation. Here's a simple example:
 
 ```typescript
+// We could also say db.create("users"...
 db.create_table("users", {
   columns: [
     { name: "username", type: buffalo.STRING, unique: true },
@@ -50,7 +51,7 @@ We can see that with this example of inserting data:
 ```typescript
 db.insert("users", { age: 1, username: "Kiyaan" });
 //Runs fine because age was not a unique column
-db.insert("users", { username: "Bob Smith", age: 1 });
+db.insert("users", { age: 1, username: "Bob Smith" });
 db.insert("users", { age: 10, username: "Sam" });
 //The following throws an error because username "Kiyaan" already exists.
 db.insert("users", { age: 100, username: "Kiyaan" });
@@ -66,7 +67,7 @@ Getting data is just as easy. We can grab all the rows with ages greater than 6 
 db.select("users", { age: { gte: 7 } });
 
 //Which then returns:
-[{ username: "Kiyaan", age: 10 }];
+[{ age: 100, username: "Kiyaan" }];
 ```
 
 Buffalo Tongue also supports default values. Here's an example where we store info about the items in a shop:
@@ -91,11 +92,7 @@ db.insert("products", { name: "gloves" });
 And log the records:
 
 ```typescript
-console.log(
-  db.select({
-    table: "products",
-  })
-);
+console.log(db.select("products"));
 ```
 
 We see that the default of 5 activated for the gloves:

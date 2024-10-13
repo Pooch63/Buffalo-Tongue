@@ -95,6 +95,10 @@ class Table {
       this.data_count = num_entries;
     }
   }
+
+  column_names(): string[] {
+    return this.schema.columns.map((c) => c.name);
+  }
 }
 
 type Update = Record<string, RowData>;
@@ -344,7 +348,7 @@ db.create_table("users", {
 });
 db.insert("users", { age: 1, username: "Kiyaan" }, { age: 2, username: "Hi!" });
 // db.insert("users", { age: 2, username: "Hi!" });
-db.insert("users", { username: "Kiyaan" });
+db.insert("users", { age: 3, username: "Kiyaan" });
 
 // console.log(
 //   db.count("users", {
