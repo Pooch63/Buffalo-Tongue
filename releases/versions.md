@@ -1,3 +1,15 @@
+- #### v0.2.1 - Very minimal version. Compiled project. Lib now accurately reflects the TypeScript.
+
+- ### v0.2.0 - Minimal but breaking changes
+
+  Creating a table now needs a "columns" array, not a "rows" array. It has now switched to:
+
+  ```typescript
+  db.create("table", {
+    columns: [{ name: "Column", type: buffalo.INT }],
+  });
+  ```
+
 - ### v0.1.4 - Fixed validation function bugs
 
 - ### v0.1.3 - Custom validation functions
@@ -7,7 +19,7 @@
 
 - ### v0.1.2 - Select Distinct, change to create table use
 
-  Database now has select distinct class.
+  Database now has select distinct function.
   Database.prototype.create_table now accepts parameters as normal arguments instead of an object.
 
 - ### v0.1.1 - Update statement, booleans, better errors

@@ -101,7 +101,6 @@ describe("Insert records", () => {
     db3.insert("table", { unique: "a" });
     expect(() => db3.insert("table", { unique: "a" })).toThrow();
   });
-
   test("Inserting valid type should be okay", () => {
     expect(() =>
       types_db.insert("test_types", {
@@ -112,6 +111,31 @@ describe("Insert records", () => {
       })
     ).not.toThrow();
   });
+  test("Inserting value into nonexistent column should throw", () => {
+    expect(() => types_db.insert("test_types", { GARBAGE: 1 })).toThrow();
+  });
+
+  test("Validation functions for row insertion works", () => {
+    const db = new buffalo.Database();
+    db.create_table("users", {
+      columns: [
+        { name: "username", type: buffalo.STRING },
+        {
+          name: "age",
+          type: buffalo.INT,
+          validation: (age) => 0 < age && age < 100,
+        },
+      ],
+    });
+    expect(() =>
+      db.insert(
+        "users",
+        { age: 1, username: "Kiyaan" },
+        { age: 2, username: "Hi!" }
+      )
+    ).not.toThrow();
+    expect(() => db.insert("users", { age: -3, username: "Kiyaan" })).toThrow();
+  });
 });
 
 describe("Select records", () => {
@@ -121,9 +145,14 @@ describe("Select records", () => {
       { name: "age", type: buffalo.INT },
     ],
   });
-  types_db.insert("users", { username: "Kiyaan", age: 12 });
-  types_db.insert("users", { username: "Bobby", age: 10 });
-  types_db.insert("users", { username: "Sam", age: 6 });
+
+  let data = [
+    { username: "Kiyaan", age: 12 },
+    { username: "Bobby", age: 10 },
+    { username: "Sam", age: 6 },
+  ];
+
+  types_db.insert("users", ...data);
 
   test("Exact condition operations are evaluated correctly", () => {
     //Testing direct equality
@@ -163,6 +192,9 @@ describe("Select records", () => {
       { username: "Sam", age: 6 },
     ]);
   });
+  test("No select condition results in all columns", () => {
+    expect(types_db.select("users")).toEqual(data);
+  });
 });
 
 describe("Delete Table", () => {
@@ -174,7 +206,6 @@ describe("Delete Table", () => {
   test("Drop table successfully deletes the table", () => {
     expect(() => db.insert("TABLE", {})).toThrow();
   });
-
   test("Drop nonexistent table throws", () => {
     expect(() => db.drop("i_dont_exist")).toThrow();
   });

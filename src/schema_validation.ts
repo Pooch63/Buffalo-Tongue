@@ -91,14 +91,20 @@ export namespace Schema {
 
     constructor({ columns }: { columns: Schema.ColumnInfo[] }) {
       let parsed_cols: Schema.Column[] = [];
-      for (let col of columns) parsed_cols.push(new Schema.Column(col));
-
-      //Check if there's a duplicate row name
       let col_names: Record<string, any> = {};
-      for (let col of parsed_cols) {
+      for (let col of columns) {
         if (col_names[col.name] != null) {
           throw new Error(`Duplicate row "${col.name}"`);
         }
+
+        if (col_names[col.name] != null) {
+          throw new Error(`Duplicate row "${col.name}"`);
+        }
+        parsed_cols.push(new Schema.Column(col));
+      }
+
+      //Check if there's a duplicate row name
+      for (let col of parsed_cols) {
         if (col.unique) {
           //Has there ALREADY BEEN a unique key?
           if (this.unique_key != null) {
@@ -123,6 +129,12 @@ export namespace Schema {
 
     //Is the record valid for the table?
     validate(record: TableRecord): boolean {
+      for (let col_name in record) {
+        if (!this.col_exists(col_name)) {
+          throw new Error(`Unrecognized column "${col_name}" in record.`);
+        }
+      }
+
       for (let col of this.columns) {
         let value = record[col.name] ?? col.default;
         if (value == null && !col.nullable) {

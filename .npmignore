@@ -9,5 +9,6 @@ build.bat
 
 tsconfig.json
 jest.config.js
+minify.js
 
 coverage

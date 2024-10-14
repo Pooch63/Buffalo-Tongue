@@ -4,7 +4,7 @@
  */
 const get_column = (col, columns) => {
   if (columns[col] != null) return col;
-  throw new Error(`Error: Column `);
+  throw new Error(`Error: Column "${col}" does not exist.`);
 };
 
 // Transform the parser's "where" object to a Buffalo Tongue operator
@@ -17,10 +17,7 @@ function sql_parse_to_native_where_obj(where, schema) {
 
   console.log(where, schema);
 
-  switch (
-    where.type
-    // case
-  ) {
+  switch (where.type) {
   }
 }
 

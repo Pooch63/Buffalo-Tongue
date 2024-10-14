@@ -32,15 +32,15 @@ module.exports = function (ast, db) {
 
   let columns = ast.columns ?? table_columns;
 
-  // Buffalo Tongue does NOT care if a row value has garbage, so  { THIS_COL_DOES_NOT_EXIST: 1, name: "asd" } will be fine
-  // So, we must explicitly warn the user that a column doesn't exist
-  if (ast.columns) {
-    for (let col of ast.columns) {
-      if (!table_columns.includes(col)) {
-        throw new Error(`Error: Column "${col}" does not exist.`);
-      }
-    }
-  }
+  //   // Buffalo Tongue does NOT care if a row value has garbage, so  { THIS_COL_DOES_NOT_EXIST: 1, name: "asd" } will be fine
+  //   // So, we must explicitly warn the user that a column doesn't exist
+  //   if (ast.columns) {
+  //     for (let col of ast.columns) {
+  //       if (!table_columns.includes(col)) {
+  //         throw new Error(`Error: Column "${col}" does not exist.`);
+  //       }
+  //     }
+  //   }
 
   for (let ind = 0; ind < columns.length; ind += 1) {
     let name = columns[ind];
