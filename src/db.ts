@@ -1,7 +1,7 @@
 import { QueryConditionObject, QueryCondition } from "./conditions";
 import { value_to_string, value_type_as_string } from "./logs";
 import { Schema } from "./schema_validation";
-import { RowData, TableData, TableRecord } from "./types";
+import { RowData, TableData, TableRecord, Datatype } from "./types";
 
 namespace Errors {
   export class Nonexistent_Value extends Error {}
@@ -180,21 +180,16 @@ export class Database {
   private select_count_from_table(
     table: Table,
     condition?: QueryCondition | null
-  ) {
+  ): number {
     //If condition is null, return the count of all the tables
     if (condition == null) return table.data_count;
 
-    let count = 0;
-    table.each((row: TableRecord) => {
-      if (condition.validate(row)) count += 1;
-    });
-
-    return count;
+    return this.select_from_table(table, condition).length;
   }
   select_count(
     table: string,
     condition?: QueryCondition | QueryConditionObject | null
-  ) {
+  ): number {
     return this.select_count_from_table(
       this.get_table(table),
       condition == null
@@ -334,10 +329,10 @@ export class Database {
   }
 }
 
-export const INT = Schema.Datatype.INT;
-export const DOUBLE = Schema.Datatype.DOUBLE;
-export const STRING = Schema.Datatype.STRING;
-export const BOOLEAN = Schema.Datatype.BOOLEAN;
+export const INT = Datatype.INT;
+export const DOUBLE = Datatype.DOUBLE;
+export const STRING = Datatype.STRING;
+export const BOOLEAN = Datatype.BOOLEAN;
 
 const db = new Database();
 db.create_table("users", {

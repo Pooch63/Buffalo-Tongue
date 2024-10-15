@@ -2,19 +2,9 @@ const { describe, test, expect } = require("@jest/globals");
 
 const buffalo = require("../lib/db");
 
-const types_db = new buffalo.Database();
-types_db.create_table("test_types", {
-  columns: [
-    { name: "dbool", type: buffalo.BOOLEAN, default: true },
-    { name: "dstring", type: buffalo.STRING, default: "STRING" },
-    { name: "dint", type: buffalo.INT, default: 1 },
-    { name: "ddouble", type: buffalo.DOUBLE, default: 1.5 },
-  ],
-});
-
 describe("Create Table", () => {
   const db = new buffalo.Database();
-  db.create_table("TABLE", { columns: [] });
+  db.create("TABLE", { columns: [] });
 
   /** Errors: */
   test("More than one unique column throws", () => {
@@ -49,6 +39,16 @@ describe("Create Table", () => {
 });
 
 describe("Insert records", () => {
+  const types_db = new buffalo.Database();
+  types_db.create_table("test_types", {
+    columns: [
+      { name: "dbool", type: buffalo.BOOLEAN, default: true },
+      { name: "dstring", type: buffalo.STRING, default: "STRING" },
+      { name: "dint", type: buffalo.INT, default: 1 },
+      { name: "ddouble", type: buffalo.DOUBLE, default: 1.5 },
+    ],
+  });
+
   test("Inserting bad type into boolean should throw", () => {
     expect(() => types_db.insert("test_types", { dbool: 1 })).toThrow();
     expect(() => types_db.insert("test_types", { dbool: "Hey!" })).toThrow();
@@ -139,7 +139,8 @@ describe("Insert records", () => {
 });
 
 describe("Select records", () => {
-  types_db.create_table("users", {
+  const db = new buffalo.Database();
+  db.create_table("users", {
     columns: [
       { name: "username", type: buffalo.STRING, unique: false },
       { name: "age", type: buffalo.INT },
@@ -152,18 +153,18 @@ describe("Select records", () => {
     { username: "Sam", age: 6 },
   ];
 
-  types_db.insert("users", ...data);
+  db.insert("users", ...data);
 
   test("Exact condition operations are evaluated correctly", () => {
     //Testing direct equality
-    expect(types_db.select("users", { age: 10 })).toMatchObject([
+    expect(db.select("users", { age: 10 })).toMatchObject([
       {
         username: "Bobby",
         age: 10,
       },
     ]);
     //Testing lte
-    expect(types_db.select("users", { age: { lte: 11 } })).toMatchObject([
+    expect(db.select("users", { age: { lte: 11 } })).toMatchObject([
       {
         username: "Bobby",
         age: 10,
@@ -176,15 +177,13 @@ describe("Select records", () => {
   });
   test("Custom validation functions are evaluated correctly", () => {
     //Testing validation function
-    expect(
-      types_db.select("users", { $validation: (row) => row.age != 6 })
-    ).toEqual([
+    expect(db.select("users", { $validation: (row) => row.age != 6 })).toEqual([
       { username: "Kiyaan", age: 12 },
       { username: "Bobby", age: 10 },
     ]);
     //Testing column-specific validation functions
     expect(
-      types_db.select("users", {
+      db.select("users", {
         username: (name) => name.length < 6,
       })
     ).toEqual([
@@ -193,7 +192,24 @@ describe("Select records", () => {
     ]);
   });
   test("No select condition results in all columns", () => {
-    expect(types_db.select("users")).toEqual(data);
+    expect(db.select("users")).toEqual(data);
+  });
+
+  test("Select count works correctly", () => {
+    expect(db.count("users")).toEqual(3);
+    expect(db.count("users", { age: 12 })).toEqual(1);
+    expect(db.count("users", { age: 100 })).toEqual(0);
+  });
+
+  test("Select distinct works correctly", () => {
+    const db = new buffalo.Database();
+    db.create("table", {
+      columns: [{ name: "age", type: buffalo.INT }],
+    });
+    db.insert("table", { age: 12 }, { age: 13 }, { age: 13 });
+
+    expect(db.distinct("table", "age").length).toEqual(2);
+    expect(db.distinct("table", ["age"]).length).toEqual(2);
   });
 });
 

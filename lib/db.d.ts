@@ -1,6 +1,6 @@
 import { QueryConditionObject, QueryCondition } from "./conditions";
 import { Schema } from "./schema_validation";
-import { RowData, TableData, TableRecord } from "./types";
+import { RowData, TableData, TableRecord, Datatype } from "./types";
 declare class Table {
     name: string;
     schema: Schema.Table;
@@ -40,8 +40,8 @@ export declare class Database {
     drop_table(table: string): void;
     drop(table: string): void;
 }
-export declare const INT = Schema.Datatype.INT;
-export declare const DOUBLE = Schema.Datatype.DOUBLE;
-export declare const STRING = Schema.Datatype.STRING;
-export declare const BOOLEAN = Schema.Datatype.BOOLEAN;
+export declare const INT = Datatype.INT;
+export declare const DOUBLE = Datatype.DOUBLE;
+export declare const STRING = Datatype.STRING;
+export declare const BOOLEAN = Datatype.BOOLEAN;
 export {};

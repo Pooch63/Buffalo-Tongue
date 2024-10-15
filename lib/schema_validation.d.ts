@@ -1,18 +1,13 @@
 import { RowData, TableRecord } from "./types";
+import { Datatype } from "./types";
 export declare namespace Schema {
-    enum Datatype {
-        INT = "integer",
-        DOUBLE = "double",
-        STRING = "string",
-        BOOLEAN = "boolean"
-    }
     function validate_type({ value, type, }: {
         value: RowData;
-        type: Schema.Datatype;
+        type: Datatype;
     }): boolean;
     interface ColumnInfo {
         name: string;
-        type: Schema.Datatype;
+        type: Datatype;
         unique?: boolean;
         nullable?: boolean;
         default?: RowData | null;
@@ -20,7 +15,7 @@ export declare namespace Schema {
     }
     class Column {
         name: string;
-        type: Schema.Datatype;
+        type: Datatype;
         default?: RowData | null;
         unique?: boolean;
         nullable?: boolean;

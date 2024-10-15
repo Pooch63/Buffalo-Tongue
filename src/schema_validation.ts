@@ -1,37 +1,32 @@
-import { value_to_string, value_type_as_string } from "./logs";
+import { type_to_string, value_to_string, value_type_as_string } from "./logs";
 import { RowData, TableRecord } from "./types";
 import { Validation } from "./type_validation";
+
+import { Datatype } from "./types";
 
 const KEYWORDS = {
   $validation: "true",
 };
 
 export namespace Schema {
-  export enum Datatype {
-    INT = "integer",
-    DOUBLE = "double",
-    STRING = "string",
-    BOOLEAN = "boolean",
-  }
-
   export function validate_type({
     value,
     type,
   }: {
     value: RowData;
-    type: Schema.Datatype;
+    type: Datatype;
   }): boolean {
     switch (type) {
-      case Schema.Datatype.INT:
+      case Datatype.INT:
         if (!Validation.is_int(value)) return false;
         break;
-      case Schema.Datatype.DOUBLE:
+      case Datatype.DOUBLE:
         if (!Validation.is_double(value)) return false;
         break;
-      case Schema.Datatype.STRING:
+      case Datatype.STRING:
         if (typeof value != "string") return false;
         break;
-      case Schema.Datatype.BOOLEAN:
+      case Datatype.BOOLEAN:
         if (typeof value != "boolean") return false;
         break;
       default:
@@ -42,7 +37,7 @@ export namespace Schema {
 
   export interface ColumnInfo {
     name: string;
-    type: Schema.Datatype;
+    type: Datatype;
     unique?: boolean;
     nullable?: boolean;
     default?: RowData | null;
@@ -52,7 +47,7 @@ export namespace Schema {
   }
   export class Column {
     public name: string;
-    public type: Schema.Datatype;
+    public type: Datatype;
     public default?: RowData | null = null;
     public unique?: boolean = false;
     public nullable?: boolean = false;
@@ -144,9 +139,11 @@ export namespace Schema {
         }
         if (value != null && !Schema.validate_type({ value, type: col.type })) {
           throw new Error(
-            `Column "${col.name}" is not of valid type (valid type is of ${
+            `Column "${
+              col.name
+            }" is not of valid type (valid type is of ${type_to_string(
               col.type
-            }, instead got value ${value_to_string(
+            )}, instead got value ${value_to_string(
               value
             )} as ${value_type_as_string(value)})`
           );
