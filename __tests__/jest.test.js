@@ -27,6 +27,16 @@ describe("Create Table", () => {
       })
     );
   });
+  test("Default value for non-nullable column should throw", () => {
+    const db = new buffalo.Database();
+    expect(() =>
+      db.create("table", {
+        columns: [
+          { name: "a", type: buffalo.STRING, default: "asd", nullable: false },
+        ],
+      })
+    ).toThrow();
+  });
 
   /** Normal funcitonality */
   test("Normal create table should pass", () => {

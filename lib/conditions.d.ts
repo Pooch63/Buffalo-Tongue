@@ -1,9 +1,11 @@
 import { RowData, TableKey, TableRecord } from "./types";
 export type QueryConditionObject = {
     $validation?: (row: TableRecord) => boolean;
+    and?: QueryConditionObject;
 } & {
     [name in string]: {
         not_eq?: RowData;
+        neq?: RowData;
         eq?: RowData;
         lt?: number;
         gt?: number;

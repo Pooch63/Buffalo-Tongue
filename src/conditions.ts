@@ -7,13 +7,18 @@ export type QueryConditionObject = {
   //E.g., with { age: { lte: 0 }, $validation: (row) => row.username.length > 40 },
   //first the { lte: 0 } part is evaluated for age. Only if the record passes that test is the $validation valled.
   $validation?: (row: TableRecord) => boolean;
+  // The condition in the and object must ALSO be true to validate a row.
+  // It is NOT recommended to use this. The feature was onl added to add support for a SQL-like CLI tool.
+  and?: QueryConditionObject;
 } & {
   //For every column in a row you try to insert
   //If that column name is a value in the QueryConditionObject,
   //it checks that value against the provided condition
   [name in string]:  //You may define more than one of these conditions //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3 //If any value is defined in this object, it is tested against the row data. //Not equal, equal, <, >, <=, >=
     | {
+        //not_eq and neq do the same thing
         not_eq?: RowData;
+        neq?: RowData;
         eq?: RowData;
         lt?: number;
         gt?: number;
@@ -64,6 +69,7 @@ export class QueryCondition {
       //Is it just plain data?
       if (typeof data != "object") return value == data;
 
+      if (data.neq && !(value !== data.neq)) return false;
       if (data.not_eq && !(value !== data.not_eq)) return false;
 
       if (data.eq && !(value === data.eq)) return false;
@@ -83,6 +89,10 @@ export class QueryCondition {
       if (data.gte && !(typeof value == "number" && value >= data.gte)) {
         return false;
       }
+    }
+
+    if (condition.and) {
+      return this.validate_against_condition(row, condition.and);
     }
 
     return true;

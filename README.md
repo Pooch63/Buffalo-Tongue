@@ -2,6 +2,8 @@
 
 (go to documentation.md for documentation)
 
+### Warning: Buffalo Tongue is still in beta. Features and API usage may be changed or removed at any time until this project reaches v1.
+
 Buffalo Tongue DB is a fun, very small database with built-in type checking that stores everything in memory (not persistent).
 
 It also supports certain database functions, including:
@@ -37,7 +39,7 @@ you need to provide type information upon table creation. Here's a simple exampl
 
 ```typescript
 // We could also say db.create("users"...
-db.create_table("users", {
+db.create("users", {
   columns: [
     { name: "username", type: buffalo.STRING, unique: true },
     { name: "age", type: buffalo.INT, unique: false },
@@ -57,7 +59,7 @@ db.insert("users", { age: 10, username: "Sam" });
 db.insert("users", { age: 100, username: "Kiyaan" });
 //The following throws an error because the column age was not provided
 db.insert("users", { username: "Kaneshka" });
-//The following is alright because even though there are unnecessary columns, all the required columns are there
+//The following is alright because even though there are nonexistent columns, all the required columns are there
 db.insert("users", { garbage: true, age: 10, username: "Jane Doe" });
 ```
 
@@ -73,7 +75,7 @@ db.select("users", { age: { gte: 7 } });
 Buffalo Tongue also supports default values. Here's an example where we store info about the items in a shop:
 
 ```typescript
-db.create_table("products", {
+db.create("products", {
   columns: [
     //Note that we aren't specifying unique: false here. Columns default to not being unique
     { name: "name", type: BuffaloTongue.STRING },

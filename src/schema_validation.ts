@@ -59,6 +59,14 @@ export namespace Schema {
       if (info.unique != null) this.unique = info.unique;
       if (info.default != null) this.default = info.default;
       if (info.nullable != null) this.nullable = info.nullable;
+
+      // You can't have a default and also say a column can be null
+      if (info.default && info.nullable == false) {
+        throw new Error(
+          `Column "${info.name}" can not be non-nullable AND have a default value.`
+        );
+      }
+
       this.validation = info.validation;
 
       if (

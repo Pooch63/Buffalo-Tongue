@@ -70,7 +70,9 @@ type QueryConditionObject = {
   //it checks that value against the provided condition
   [name in string]:  //You may define more than one of these conditions //E.g., if lte = 3, this only returns records in which the provided column is less than or equal to 3 //If any value is defined in this object, it is tested against the row data. //Not equal, equal, <, >, <=, >=
     | {
+        //not_eq and neq do the same thing
         not_eq?: RowData;
+        neq?: RowData;
         eq?: RowData;
         lt?: number;
         gt?: number;
@@ -148,6 +150,17 @@ class `Database`
     Condition to check records against. Only records that meet this condition are returned.
 
   - <span style="color:#FF7F7F">@return</span> `TableRecord[]`
+
+- ### select_count (alias: `count`)
+
+  - <span style="color:#FF7F7F">@param</span> - table (`string`)
+    The table name
+
+  - <span style="color:#FF7F7F">@param</span> - condition (`QueryCondition | QueryConditionObject |  null`)
+    Condition to check records against. Only records that meet this condition are returned.
+
+  - <span style="color:#FF7F7F">@return</span> `number`
+    The number of records that matched the condition (or the number of records in the table if no condition was provided).
 
 - ### select_distinct (alias: `distinct`)
 

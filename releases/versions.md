@@ -12,10 +12,11 @@
 
 - ### v0.1.4 - Fixed validation function bugs
 
-- ### v0.1.3 - Custom validation functions
+- ### v0.1.3 - Custom validation functions, new aliases
 
   Query condition objects now allow vlaidation functions that are called for every record to ensure they are valid.
   Furthermore, a function can be specified for every column in a row to ensure that the column is valid as well.
+  `create` new alias for `create_table`, `distinct` for `select_distinct`, `count` for `select_count`, `drop` for `drop_table`.
 
 - ### v0.1.2 - Select Distinct, change to create table use
 
