@@ -64,6 +64,9 @@ type QueryConditionObject = {
   //E.g., with { age: { lte: 0 }, $validation: (row) => row.username.length > 40 },
   //first the { lte: 0 } part is evaluated for age. Only if the record passes that test is the $validation valled.
   $validation?: (row: TableRecord) => boolean;
+  // The condition in the and object must ALSO be true to validate a row.
+  // It is NOT recommended to use this. The feature was onl added to add support for a SQL-like CLI tool.
+  and?: QueryConditionObject;
 } & {
   //For every column in a row you try to insert
   //If that column name is a value in the QueryConditionObject,

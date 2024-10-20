@@ -1,6 +1,12 @@
-- #### v0.2.1 - Very minimal version. Compiled project. Lib now accurately reflects the TypeScript.
+- ### v0.2.2 - Minimal changes.
 
-- ### v0.2.0 - Minimal but breaking changes
+  - Neq now does the same thing as not_eq in query conditions.
+  - An error is thrown if a column is described as non-nullable and with a default value.
+  - You can specify another condition that MUST be true for a column within a condition with the "and" property.
+
+- ### v0.2.1 - Very minimal version. Compiled project. Lib now accurately reflects the TypeScript.
+
+- ### v0.2.0 - Minimal but breaking changes. Nullables columns now allowed.
 
   Creating a table now needs a "columns" array, not a "rows" array. It has now switched to:
 

@@ -1,3 +1,5 @@
+All ergonomics:
+
 0.5. Maybe? In create table, it should just be { columns: { a: {type: buffalo.STRING} } } instead of { columns: [ { name: "a", type: buffalo.STRNIG } ] }
 
 1. Allow database to be single table if you specify a schema in the constructor. If you do this, the following might happen:
@@ -17,5 +19,4 @@
 
 4. Maybe? In create table, allow overload with a simple array of column information.
 
-5. add required field to column info that, if false, means a value can be null. This required field defaults to true, but it is always false
-   if you specify a default value. If you try to say it's false AND provide a default, an error is thrown.
+5. Maybe? In column info, you can just specify min, max, etc.
