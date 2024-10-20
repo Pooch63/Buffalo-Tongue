@@ -28,7 +28,8 @@ export declare class Database {
     private insert_into_table;
     insert(table: string, ...records: TableRecord[]): void;
     private select_from_table;
-    select(table: string, condition?: QueryCondition | QueryConditionObject | null): TableRecord[];
+    select(table: string, condition?: QueryCondition | QueryConditionObject): TableRecord[];
+    select(table: string, column: string, condition?: QueryCondition | QueryConditionObject): RowData[];
     private select_count_from_table;
     select_count(table: string, condition?: QueryCondition | QueryConditionObject | null): number;
     count(table: string, condition?: QueryCondition | QueryConditionObject | null): number;

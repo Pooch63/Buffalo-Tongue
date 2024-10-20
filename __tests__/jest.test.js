@@ -221,6 +221,10 @@ describe("Select records", () => {
     expect(db.distinct("table", "age").length).toEqual(2);
     expect(db.distinct("table", ["age"]).length).toEqual(2);
   });
+
+  test("Selecting a compiled array of one column works", () => {
+    expect(db.select("users", "age")).toEqual([12, 10, 6]);
+  });
 });
 
 describe("Delete Table", () => {

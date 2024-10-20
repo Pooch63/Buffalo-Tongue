@@ -109,6 +109,14 @@ function update_row(update: Update, row: TableRecord) {
   }
 }
 
+type Condition = QueryCondition | QueryConditionObject | null;
+const condition_to_obj = (condition: Condition): QueryCondition | null => {
+  return condition == null
+    ? null
+    : condition instanceof QueryCondition
+    ? condition
+    : new QueryCondition(condition);
+};
 export class Database {
   private tables: Record<string, Table> = {};
   get_table(table: string): Table {
@@ -144,36 +152,60 @@ export class Database {
 
   private select_from_table(
     table: Table,
-    condition?: QueryCondition | null
-  ): TableRecord[] {
-    //If no condition was proivded, literally just return every row
-    if (condition == null) {
-      let columns: TableRecord[] = [];
-      table.each((col: TableRecord) => {
-        columns.push(col);
-      });
-      return columns;
+    b?: string | Condition,
+    constraint?: QueryCondition | null
+  ): RowData[] | TableRecord[] {
+    // If the second argument was a string, it is the column name. Otherwise, it is the third argument
+    let condition = typeof b == "string" ? constraint : condition_to_obj(b);
+    // If the second argument was a string, then it was the column that they wanted compiled into a list
+    let col: string | null = typeof b == "string" ? b : null;
+
+    if (col != null && !table.column_names().includes(col)) {
+      throw new Errors.Nonexistent_Column(
+        `Cannot compile nonexistent column "${col}" into array.`
+      );
     }
 
     let rows: TableRecord[] = [];
-    table.each((row: TableRecord) => {
-      //Should not continue to add rows
-      if (rows.length >= condition.row_limit) return false;
-      if (condition.validate(row)) rows.push(row);
-    });
+    let col_arr: RowData[] = [];
+    //If no condition was proivded, literally just return every row
+    if (condition == null) {
+      table.each((row: TableRecord) => {
+        if (col != null) col_arr.push(row[col]);
+        else rows.push(row);
+      });
+    } else {
+      table.each((row: TableRecord) => {
+        //Should not continue to add rows
+        if (rows.length >= condition.row_limit) return false;
+        if (condition.validate(row)) {
+          if (col != null) col_arr.push(row[col]);
+          else rows.push(row);
+        }
+      });
+    }
+
+    if (col != null) return col_arr;
     return rows;
   }
   select(
     table: string,
-    condition?: QueryCondition | QueryConditionObject | null
-  ): TableRecord[] {
+    condition?: QueryCondition | QueryConditionObject
+  ): TableRecord[];
+  select(
+    table: string,
+    column: string,
+    condition?: QueryCondition | QueryConditionObject
+  ): RowData[];
+  select(
+    table: string,
+    cols_or_condition?: string | Condition,
+    condition?: Condition
+  ): RowData[] | TableRecord[] {
     return this.select_from_table(
       this.get_table(table),
-      condition == null
-        ? null
-        : condition instanceof QueryCondition
-        ? condition
-        : new QueryCondition(condition)
+      cols_or_condition,
+      condition_to_obj(condition)
     );
   }
 
@@ -192,11 +224,7 @@ export class Database {
   ): number {
     return this.select_count_from_table(
       this.get_table(table),
-      condition == null
-        ? null
-        : condition instanceof QueryCondition
-        ? condition
-        : new QueryCondition(condition)
+      condition_to_obj(condition)
     );
   }
   //Select count alias
@@ -224,12 +252,7 @@ export class Database {
       }
     }
 
-    let parsed_condition =
-      condition == null
-        ? null
-        : condition instanceof QueryCondition
-        ? condition
-        : new QueryCondition(condition);
+    let parsed_condition = condition_to_obj(condition);
 
     let distinct: Record<string, Record<string | number, TableRecord>> = {};
     for (let col of table.schema.columns) distinct[col.name] = {};
@@ -271,11 +294,7 @@ export class Database {
   ) {
     this.delete_from_table(
       this.get_table(table_name),
-      condition == null
-        ? null
-        : condition instanceof QueryCondition
-        ? condition
-        : new QueryCondition(condition)
+      condition_to_obj(condition)
     );
   }
 
@@ -285,12 +304,7 @@ export class Database {
     condition?: QueryCondition | QueryConditionObject | null
   ) {
     let table = this.get_table(table_name);
-    let parsed_condition =
-      condition == null
-        ? null
-        : condition instanceof QueryCondition
-        ? condition
-        : new QueryCondition(condition);
+    let parsed_condition = condition_to_obj(condition);
 
     //Validate that every type in the update object matches the column type
     for (let col of table.schema.columns) {
@@ -342,15 +356,10 @@ db.create_table("users", {
   ],
 });
 db.insert("users", { age: 1, username: "Kiyaan" }, { age: 2, username: "Hi!" });
-// db.insert("users", { age: 2, username: "Hi!" });
+db.insert("users", { age: 2, username: "Hi!" });
 db.insert("users", { age: 3, username: "Kiyaan" });
 
-// console.log(
-//   db.count("users", {
-//     // age: (data: RowData) => data != 3,
-//     $validation: (row: TableRecord) => row.username == "Hi!",
-//   })
-// );
-// // console.log(db.update("users", { age: 2 }, { username: "yo" }));
-// console.log(db.select_distinct("users", ["username"]));
-// console.log(db.select("users"));
+console.log(db.select("users", "username"));
+// console.log(db.update("users", { age: 2 }, { username: "yo" }));
+console.log(db.select_distinct("users", ["username"]));
+console.log(db.select("users"));
